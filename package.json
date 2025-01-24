@@ -13,6 +13,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "axios": "^1.7.9",
     "canvas": "^3.1.0",
     "commander": "^13.1.0",
     "enquirer": "^2.4.1",
@@ -20,6 +22,8 @@
     "groq-sdk": "^0.12.0",
     "pexels": "^1.4.0",
     "sharp": "^0.33.5",
-    "uuid": "^11.0.5"
+    "uuid": "^11.0.5",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   }
 }
