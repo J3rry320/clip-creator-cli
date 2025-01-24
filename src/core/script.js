@@ -1,5 +1,6 @@
 "use strict";
 const { Groq } = require("groq-sdk");
+const Logger = require("../utils/logger");
 
 class PromptGenerator {
   /**
@@ -12,6 +13,7 @@ class PromptGenerator {
       throw new Error("API key is required to use the PromptGenerator");
     }
     this.API_KEY = apiKey;
+    this.logger = new Logger();
   }
 
   /**
@@ -27,20 +29,30 @@ class PromptGenerator {
    * @static
    * @type {string}
    */
-  static SYSTEM_PROMPT = `You are a professional video script writer for social media shorts (YouTube/Instagram).
-Your task is to create engaging, concise scripts that are:
-- Broken into ${this.SEGMENT_DURATION}-second segments
-- Optimized for vertical video format
-- Engaging within the first 3 seconds
-- Written in a conversational style
-- Includes clear timing for transitions
-- Maintains consistent pacing throughout
-
-Each segment should be formatted as:
-[Segment X - Timestamp]
-Text: (what appears on screen)
-Description: (brief context for visual elements, if media is used)
-Transition: (transition effect to next segment)`;
+  static SYSTEM_PROMPT = `You are a professional video script writer for social media shorts. 
+  Generate a script with these exact requirements:
+  - Exactly ${this.SEGMENT_DURATION} seconds per segment
+  - Structured format: [Segment X - Timestamp]
+  - Fields for each segment:
+    * id: Sequential number
+    * text: On-screen text/narration
+    * duration: ${this.SEGMENT_DURATION} seconds
+    * description: Visual context (optional)
+    * transition: One of: 'fade', 'slideLeft', 'slideRight', 'zoomIn', 'zoomOut', 'dissolve', 'circleWipe', 'pixelize'
+  
+  Output MUST be parseable JSON with exact structure:
+  {
+    "segments": [
+      {
+        "id": 1,
+        "text": "Segment text",
+        "duration": 5,
+        "description": "Optional visual description",
+        "transition": "fade"
+      }
+      // Additional segments...
+    ]
+  }`;
 
   /**
    * Generates a user prompt based on the provided configuration.
@@ -55,18 +67,23 @@ Transition: (transition effect to next segment)`;
   static generateUserPrompt(config) {
     const numSegments = Math.floor(config.duration / this.SEGMENT_DURATION);
 
-    return `Create a ${config.duration}-second ${
-      config.category
-    } video script with a ${config.tone} tone.
-${
-  config.style === "media"
-    ? "Include visual descriptions for each segment."
-    : "Focus on text presentation with gradient backgrounds."
-}
-Break it into ${numSegments} segments of ${this.SEGMENT_DURATION} seconds each.
-Make it engaging for ${config.category} enthusiasts while maintaining the ${
-      config.tone
-    } tone throughout.`;
+    return `Create a ${config.duration}-second ${config.category} video script:
+  - Category: ${config.category}
+  - Tone: ${config.tone}
+  - Style: ${config.style}
+  - Total Segments: ${numSegments}
+  - Each Segment: ${this.SEGMENT_DURATION} seconds
+  
+  Ensure:
+  1. Engaging content for ${config.category} audience
+  2. ${config.tone} tone throughout
+  3. ${
+    config.style === "media"
+      ? "Include visual descriptions"
+      : "Text-focused presentation"
+  }
+  4. Use specified JSON output format
+  5. Varied, dynamic transitions between segments`;
   }
 
   /**
@@ -96,41 +113,10 @@ Make it engaging for ${config.category} enthusiasts while maintaining the ${
         stop: null,
       });
 
-      return this.parseResponse(completion.choices[0].message.content || "");
+      return JSON.parse(completion.choices[0].message.content || "");
     } catch (error) {
       throw new Error(`Script generation failed: ${error}`);
     }
-  }
-
-  /**
-   * Parses the AI-generated response into structured segments.
-   * @param {string} response - The raw response from the AI model.
-   * @returns {Object} An object containing structured segments.
-   */
-  parseResponse(response) {
-    const segments = response.split(/\[Segment \d+/).filter(Boolean);
-
-    return {
-      segments: segments.map((segment, index) => ({
-        id: index + 1,
-        timestamp: index * PromptGenerator.SEGMENT_DURATION,
-        text: this.extractField(segment, "Text"),
-        description: this.extractField(segment, "Description"),
-        transition: this.extractField(segment, "Transition"),
-      })),
-    };
-  }
-
-  /**
-   * Extracts a specific field from a segment.
-   * @param {string} segment - The segment string to extract the field from.
-   * @param {string} field - The field to extract (e.g., "Text", "Description", "Transition").
-   * @returns {string} The extracted field value, or an empty string if not found.
-   */
-  extractField(segment, field) {
-    const regex = new RegExp(`${field}: (.+)(\n|$)`);
-    const match = segment.match(regex);
-    return match ? match[1].trim() : "";
   }
 }
 
