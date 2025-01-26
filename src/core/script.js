@@ -38,7 +38,7 @@ class PromptGenerator {
     * text: On-screen text/narration
     * duration: ${this.SEGMENT_DURATION} seconds
     * description: Visual context (optional)
-    * transition: One of: 'fade', 'slideLeft', 'slideRight', 'zoomIn', 'zoomOut', 'dissolve', 'circleWipe', 'pixelize'
+    * transition: One of: 'fade', 'slideLeft', 'slideRight', 'dissolve', 'circleWipe', 'pixelize'
   
   Output MUST be parseable JSON with exact structure:
   {
