@@ -1,4 +1,3 @@
-const axios = require("axios");
 const path = require("path");
 const fs = require("fs");
 const { promisify } = require("util");
@@ -130,28 +129,28 @@ class AudioManager {
       const searchTerm =
         this.CATEGORY_MAPPINGS[params.category] || "background music";
 
-      // Search for tracks
-      const searchResponse = await axios.get(this.FREESOUND_API_URL, {
-        params: {
+      // Search for tracks using Fetch API
+      const searchResponse = await fetch(
+        `${this.FREESOUND_API_URL}?${new URLSearchParams({
           query: searchTerm,
           token: this.config.freesoundApiKey,
-          filter: "duration:[0 TO 60]", // Limit to tracks under 1 minute
+          filter: "duration:[0 TO 60]",
           sort: "rating_desc",
           fields: "id,name,previews,duration,username",
-        },
-      });
+        })}`
+      );
 
-      if (
-        !searchResponse.data.results ||
-        searchResponse.data.results.length === 0
-      ) {
+      if (!searchResponse.ok) {
+        throw new Error(`API request failed: ${searchResponse.status}`);
+      }
+
+      const data = await searchResponse.json();
+      if (!data.results || data.results.length === 0) {
         throw new Error("No music found for the specified category");
       }
 
       const selectedTrack =
-        searchResponse.data.results[
-          Math.floor(Math.random() * searchResponse.data.results.length)
-        ];
+        data.results[Math.floor(Math.random() * data.results.length)];
 
       const musicId = uuidv4();
       const rawPath = path.join(
@@ -163,14 +162,15 @@ class AudioManager {
         `${musicId}.${this.config.outputFormat}`
       );
 
-      // Download the audio file
-      const audioResponse = await axios({
-        method: "get",
-        url: selectedTrack.previews["preview-lq-mp3"],
-        responseType: "stream",
-      });
+      // Download the audio file using Fetch
+      const audioResponse = await fetch(
+        selectedTrack.previews["preview-lq-mp3"]
+      );
+      if (!audioResponse.ok) {
+        throw new Error(`Audio download failed: ${audioResponse.status}`);
+      }
 
-      await pipeline(audioResponse.data, fs.createWriteStream(rawPath));
+      await pipeline(audioResponse.body, fs.createWriteStream(rawPath));
 
       // Apply fade effects
       await this.applyFadeEffects(
@@ -180,7 +180,7 @@ class AudioManager {
         this.config.fadeOutDuration
       );
 
-      // Optional: remove raw file
+      // Clean up raw file
       fs.unlinkSync(rawPath);
 
       return {
