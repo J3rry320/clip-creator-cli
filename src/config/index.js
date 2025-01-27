@@ -1,0 +1,31 @@
+const CATEGORIES = [
+  "Science & Technology",
+  "Sports & Fitness",
+  "Government & Politics",
+  "Entertainment & Celebrities",
+  "Education & Learning",
+  "Video Games & Esports",
+  "Travel & Tourism",
+  "Health & Wellness",
+  "World News",
+  "Business & Finance",
+  "Lifestyle & Culture",
+  "Art & Design",
+  "Environment & Sustainability",
+  "Food & Cooking",
+];
+const TONES = [
+  "Professional/Formal",
+  "Friendly/Casual",
+  "Inspirational/Motivational",
+  "Humorous/Witty",
+  "Empathetic/Compassionate",
+  "Analytical/Data-Driven",
+  "Persuasive/Argumentative",
+  "Informative/Educational",
+  "Storytelling/Narrative",
+  "Neutral/Objective",
+  "Authoritative/Expert",
+  "Curious/Exploratory",
+];
+module.exports = { CATEGORIES, TONES };

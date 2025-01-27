@@ -402,9 +402,7 @@ class VideoGenerator {
           accumulatedDuration += duration - transitionDuration;
         }
       });
-      this.logger.warn(`Output path: ${outputPath}`);
-      this.logger.warn(`Accumulated duration: ${accumulatedDuration}s`);
-      this.logger.warn(`FFmpeg path: ${ffmpegPath}`);
+
       filterString += `[${previousStream}]format=yuv420p[outv]`;
       const filters = filterString.split("; ").filter((f) => f.trim() !== "");
       if (filters.some((f) => !/^\[.+\]/.test(f))) {

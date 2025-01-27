@@ -1,6 +1,35 @@
 "use strict";
 const { Groq } = require("groq-sdk");
 const Logger = require("../utils/logger");
+const { z } = require("zod");
+
+const SegmentSchema = z.object({
+  id: z.number().int().positive(),
+  text: z.string().min(15),
+  duration: z.literal(5),
+  description: z.string().min(5),
+  transition: z.enum([
+    "fade",
+    "slideLeft",
+    "slideRight",
+    "dissolve",
+    "circleWipe",
+    "pixelize",
+    "panLeft",
+    "panRight",
+    "scaleUp",
+    "scaleDown",
+    "rotate",
+    "directionalWipe",
+  ]),
+});
+/**
+ * Zod schema for the full script structure
+ * @type {z.ZodSchema}
+ */
+const ScriptSchema = z.object({
+  segments: z.array(SegmentSchema).min(3),
+});
 
 class PromptGenerator {
   /**
@@ -21,7 +50,20 @@ class PromptGenerator {
    * @static
    * @type {number}
    */
-  static SEGMENT_DURATION = 5; // seconds per segment
+  static SEGMENT_DURATION = 5;
+  /**
+   * Maximum number of retry attempts for API calls
+   * @static
+   * @type {number}
+   */
+  static MAX_RETRIES = 3;
+  /**
+   * Default error message for LLM failures
+   * @static
+   * @type {string}
+   */
+  static LLM_ERROR_MESSAGE =
+    "Failed to generate valid response from AI model. Please try again later.";
 
   /**
    * The system prompt for generating scripts.
@@ -31,16 +73,24 @@ class PromptGenerator {
    */
   static SYSTEM_PROMPT = `You are a professional video script writer for social media shorts. 
   Generate a script with these exact requirements:
-  - Exactly ${this.SEGMENT_DURATION} seconds per segment
+  - Exactly ${PromptGenerator.SEGMENT_DURATION} seconds per segment
   - Structured format: [Segment X - Timestamp]
   - Fields for each segment:
     * id: Sequential number
-    * text: On-screen text/narration
-    * duration: ${this.SEGMENT_DURATION} seconds
-    * description: Visual context (optional)
-    * transition: One of: 'fade', 'slideLeft', 'slideRight', 'dissolve', 'circleWipe', 'pixelize'
-  
-  Output MUST be parseable JSON with exact structure:
+    * text: Concise, factual on-screen text/narration (Min 20-30 words)
+    * duration: ${PromptGenerator.SEGMENT_DURATION} seconds
+    * description: Visual context matching the text
+    * transition: One of: "fade", "slideLeft","slideRight","dissolve", "circleWipe","pixelize","panLeft","panRight","scaleUp","scaleDown","rotate","directionalWipe",
+ 
+ Content Guidelines:
+  - When specific terms are provided: 
+    * Maintain factual accuracy
+    * Include relevant statistics/dates
+    * Contextualize importance
+  - Verify all factual claims against known information
+  - For political content: Maintain neutral tone
+
+ Output MUST be parseable JSON with exact structure:
   {
     "segments": [
       {
@@ -67,39 +117,123 @@ class PromptGenerator {
   static generateUserPrompt(config) {
     const numSegments = Math.floor(config.duration / this.SEGMENT_DURATION);
 
-    return `Create a ${config.duration}-second ${config.category} video script:
-  - Category: ${config.category}
-  - Tone: ${config.tone}
-  - Style: ${config.style}
-  - Total Segments: ${numSegments}
-  - Each Segment: ${this.SEGMENT_DURATION} seconds
-  
-  Ensure:
-  1. Engaging content for ${config.category} audience
-  2. ${config.tone} tone throughout
-  3. ${
-    config.style === "media"
-      ? "Include visual descriptions"
-      : "Text-focused presentation"
-  }
-  4. Use specified JSON output format
-  5. Varied, dynamic transitions between segments`;
+    return `Create a ${config.duration}-second ${
+      config.category
+    } video about: ${config.topic}
+    
+    Requirements:
+    1. Target audience: ${config.category} viewers
+    2. Tone: ${config.tone}${
+      config.style === "media"
+        ? "\n3. Include specific visual references"
+        : "\n3. Focus on text presentation"
+    }
+    4. Key elements: ${config.keyTerms.join(", ") || "None provided"}
+    5. Transitions: Vary between segments
+    6. Accuracy: ${
+      config.requireFactChecking
+        ? "Verify all facts"
+        : "Basic factual correctness"
+    }
+    
+    Output: Strict JSON format with ${numSegments} segments`;
   }
 
   /**
-   * Generates a script using the Groq SDK.
-   * @param {Object} config - The configuration for the video script.
-   * @param {number} config.duration - Total duration of the video in seconds.
-   * @param {string} config.category - The category of the video (e.g., "education", "entertainment").
-   * @param {string} config.tone - The tone of the video (e.g., "informative", "humorous").
-   * @param {string} config.style - The style of the video (e.g., "media", "text-based").
-   * @returns {Promise<Object>} The generated video script, formatted into segments.
-   * @throws {Error} If the script generation fails.
+   * Determines if a failed request should be retried
+   * @param {Error} error - Error object from previous attempt
+   * @returns {boolean} True if request should be retried
    */
-  async generateScript(config) {
-    const groq = new Groq({ apiKey: this.API_KEY });
+  shouldRetry(error) {
+    const retryableErrors = [
+      "Invalid JSON response",
+      "Empty response from model",
+      "Unexpected end of JSON input",
+    ];
+    return retryableErrors.some((e) => error.message.includes(e));
+  }
+
+  /**
+   * Validates the configuration object for script generation
+   * @param {Object} config - Configuration object to validate
+   * @param {number} config.duration - Total video duration in seconds
+   * @param {string} config.category - Video category/type
+   * @param {string} config.tone - Desired narrative tone
+   * @param {string} config.style - Visual presentation style
+   * @throws {Error} For invalid configuration parameters
+   */
+  validateConfig(config) {
+    const requiredFields = ["duration", "category", "tone", "style"];
+    const missing = requiredFields.filter((field) => !config[field]);
+
+    if (missing.length > 0) {
+      throw new Error(`Missing required fields: ${missing.join(", ")}`);
+    }
+
+    if (config.duration % PromptGenerator.SEGMENT_DURATION !== 0) {
+      throw new Error(
+        `Duration must be divisible by ${PromptGenerator.SEGMENT_DURATION}`
+      );
+    }
+  }
+
+  /**
+   * Validates and parses the AI model response
+   * @param {Object} completion - Raw response from Groq API
+   * @returns {Object} Validated script structure
+   * @throws {Error} For invalid response structures
+   */
+  validateResponse(completion) {
+    const rawContent = completion.choices[0]?.message?.content?.trim();
+
+    // Check for empty response
+    if (!rawContent || rawContent === "{}") {
+      throw new Error("Empty response from model");
+    }
 
     try {
+      const parsed = JSON.parse(rawContent);
+      const result = ScriptSchema.safeParse(parsed);
+
+      if (!result.success) {
+        this.logger.error("Validation errors:", result.error.format());
+        throw new Error("Invalid JSON structure");
+      }
+
+      return result.data;
+    } catch (error) {
+      this.logger.error("JSON parsing failed:", error.message);
+      throw new Error(`Invalid JSON response: ${error.message}`);
+    }
+  }
+  /**
+   * Creates a delay promise for retry backoff
+   * @param {number} ms - Milliseconds to delay
+   * @returns {Promise<void>} Promise that resolves after delay
+   */
+  delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Generates a video script through AI model completion
+   * @param {Object} config - Configuration for script generation
+   * @param {number} config.duration - Total duration in seconds
+   * @param {string} config.category - Video category/type
+   * @param {string} config.tone - Desired narrative tone
+   * @param {string} config.style - Visual presentation style
+   * @param {string} config.topic - Main video topic/theme
+   * @param {string[]} config.keyTerms - Key terms to include
+   * @param {boolean} config.requireFactChecking - Fact verification flag
+   * @param {number} [attempt=0] - Current retry attempt count
+   * @returns {Promise<Object>} Generated script object
+   * @throws {Error} After maximum retries or fatal errors
+   */
+  async generateScript(config, attempt = 0) {
+    try {
+      this.validateConfig(config);
+      const groq = new Groq({ apiKey: this.API_KEY, timeout: 30000 });
+
       const completion = await groq.chat.completions.create({
         messages: [
           { role: "system", content: PromptGenerator.SYSTEM_PROMPT },
@@ -112,10 +246,16 @@ class PromptGenerator {
         stream: false,
         stop: null,
       });
-
-      return JSON.parse(completion.choices[0].message.content || "");
+      return this.validateResponse(completion);
     } catch (error) {
-      throw new Error(`Script generation failed: ${error}`);
+      this.logger.error(`Attempt ${attempt + 1} failed: ${error.message}`);
+
+      if (this.shouldRetry(error) && attempt < PromptGenerator.MAX_RETRIES) {
+        await this.delay(1000 * (attempt + 1)); // Exponential backoff
+        return this.generateScript(config, attempt + 1);
+      }
+
+      throw new Error(PromptGenerator.LLM_ERROR_MESSAGE);
     }
   }
 }
