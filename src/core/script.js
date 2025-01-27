@@ -200,6 +200,11 @@ class PromptGenerator {
         this.logger.error("Validation errors:", result.error.format());
         throw new Error("Invalid JSON structure");
       }
+      this.logger
+        .terminal()
+        .green(
+          "[INFO] ✍️  The script from the LLM has been successfully generated.\n"
+        );
 
       return result.data;
     } catch (error) {

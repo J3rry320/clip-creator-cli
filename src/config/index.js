@@ -14,6 +14,7 @@ const CATEGORIES = [
   "Environment & Sustainability",
   "Food & Cooking",
 ];
+
 const TONES = [
   "Professional/Formal",
   "Friendly/Casual",
@@ -28,4 +29,15 @@ const TONES = [
   "Authoritative/Expert",
   "Curious/Exploratory",
 ];
-module.exports = { CATEGORIES, TONES };
+
+// List of legible ASCII fonts
+const LEGIBLE_FONTS = [
+  "Standard",
+  "Big",
+  "Slant",
+  "Banner",
+  "ANSI Shadow",
+  "Rounded",
+  "Mini",
+];
+module.exports = { CATEGORIES, TONES, LEGIBLE_FONTS };

@@ -13,7 +13,6 @@
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffmpeg = require("fluent-ffmpeg");
-const { createCanvas } = require("canvas");
 const { createClient } = require("pexels");
 const path = require("path");
 const fs = require("fs");
@@ -101,8 +100,15 @@ class VideoGenerator {
    * @param {string} audioPath - Path to the background audio file.
    * @returns {Promise<string>} - Path to the generated video.
    */
+
   async generateVideo(segments, audioPath) {
     try {
+      this.logger
+        .terminal()
+        .yellow(
+          "[INFO] 🎥 Searching Pexels for video assets and adding text overlays...\n"
+        );
+
       const segmentPaths = await Promise.all(
         segments.map((segment) => this.createSegment(segment))
       );
@@ -119,7 +125,7 @@ class VideoGenerator {
 
       await this.combineVideoAndAudio(audioPath, withTransitions, outputPath);
 
-      await this.cleanup(segmentPaths);
+      await this.cleanup([...segmentPaths, withTransitions]);
 
       return outputPath;
     } catch (error) {
@@ -277,7 +283,12 @@ class VideoGenerator {
 
   async combineVideosWithTransitions(videoFiles, transitions) {
     try {
-      this.logger.info("Applying transitions to combine video segments");
+      this.logger
+        .terminal()
+        .blue(
+          "[INFO] ✂️  Combining multiple video clips with transitions...\n"
+        );
+
       const outputPath = path.join(
         this.tempDir,
         `with_transitions_${uuidv4()}.mp4`
@@ -300,11 +311,6 @@ class VideoGenerator {
       let previousStream;
 
       videoFiles.forEach((filePath, index) => {
-        this.logger.info(
-          `Processing segment ${index + 1}/${
-            videoFiles.length
-          }: ${path.basename(filePath)}`
-        );
         command.input(filePath);
         const duration = transitions[index].duration;
 
@@ -349,7 +355,6 @@ class VideoGenerator {
       if (filters.some((f) => !/^\[.+\]/.test(f))) {
         throw new Error("Invalid filter syntax: " + filters.join("\n"));
       }
-      this.logger.warn("Final Filter Graph:\n" + filters.join("\n"));
 
       return new Promise((resolve, reject) => {
         command
@@ -360,9 +365,10 @@ class VideoGenerator {
             "-c:v libx264",
             `-r ${this.config.fps}`,
           ])
-
-          .on("progress", (progress) => {
-            this.logger.info(`Processing: ${progress.timemark}`);
+          .on("start", () => {
+            this.logger.info(
+              `Started with combining ${videoFiles.length} segements`
+            );
           })
           .on("end", () => {
             this.logger.info(
@@ -409,17 +415,17 @@ class VideoGenerator {
 
     try {
       // Check input files
-      console.log(audioPath);
+      this.logger
+        .terminal()
+        .cyan("[INFO] 🎧 Adding the selected audio track to the video...\n");
+
       validatePath(audioPath, "audio");
       validatePath(videoPath, "video");
 
       return new Promise((resolve, reject) => {
         ffmpeg()
-          // Input handling
           .input(videoPath)
           .input(audioPath)
-
-          // Output configuration
           .outputOptions([
             "-map 0:v", // Take video from first input
             "-map 1:a", // Take audio from second input
@@ -428,19 +434,11 @@ class VideoGenerator {
             "-shortest", // Match duration to shortest input
             "-movflags +faststart", // Optimize for web playback
           ])
-
-          // Event handlers
-          .on("start", (commandLine) => {
-            console.log("FFmpeg command:", commandLine);
-          })
-          .on("progress", (progress) => {
-            console.log(`Processing: ${progress.timemark}`);
-          })
           .on("end", () => {
-            console.log("Successfully combined audio/video");
             resolve(outputPath);
           })
           .on("error", (err, stdout, stderr) => {
+            this.logger.error(`Error mergin audio into video: ${err.message}`);
             reject(
               new Error(
                 [`FFmpeg error: ${err.message}`, `Stderr: ${stderr}`].join("\n")

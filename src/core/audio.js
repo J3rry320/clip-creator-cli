@@ -126,11 +126,15 @@ class AudioManager {
    * Generates a music file based on the provided category and parameters.
    * @param {Object} params - Parameters for generating music.
    * @param {string} params.category - Category for the music (e.g., "tech", "sports").
-   * @returns {Promise<Object>} Metadata and path of the generated music file.
+   * @returns {Promise<String>} The path of the generated music file.
    * @throws {Error} If no music is found or an error occurs during processing.
    */
   async generateMusic(params) {
     try {
+      this.logger
+        .terminal()
+        .cyan("[INFO] 🎵 Looking up audio from FreeSound.org...\n");
+
       const searchTerm =
         this.CATEGORY_MAPPINGS[params.category] || "background music";
 
@@ -156,7 +160,11 @@ class AudioManager {
 
       const selectedTrack =
         data.results[Math.floor(Math.random() * data.results.length)];
-
+      this.logger
+        .terminal()
+        .magenta(
+          `[INFO] 🎶 Audio found! Track: "${selectedTrack.name}" by ${selectedTrack.username}.\n`
+        );
       const musicId = uuidv4();
       const rawPath = path.join(
         this.config.tempDir,
@@ -166,6 +174,11 @@ class AudioManager {
         this.config.tempDir,
         `${musicId}.${this.config.outputFormat}`
       );
+      this.logger
+        .terminal()
+        .cyan(
+          "[INFO] 🎵 Audio is being downloaded from Freesound.org. Please wait...\n"
+        );
 
       // Download the audio file using Fetch
       const audioResponse = await fetch(
@@ -176,6 +189,11 @@ class AudioManager {
       }
 
       await pipeline(audioResponse.body, fs.createWriteStream(rawPath));
+      this.logger
+        .terminal()
+        .yellow(
+          "[INFO] 🎚️ Applying FadeIn and FadeOut effects to the audio...\n"
+        );
 
       // Apply fade effects
       await this.applyFadeEffects(
@@ -188,18 +206,7 @@ class AudioManager {
       // Clean up raw file
       fs.unlinkSync(rawPath);
 
-      return {
-        id: musicId,
-        duration: selectedTrack.duration,
-        format: this.config.outputFormat,
-        path: outputPath,
-        category: params.category,
-        timestamp: Date.now(),
-        trackInfo: {
-          title: selectedTrack.name,
-          artist: selectedTrack.username,
-        },
-      };
+      return outputPath;
     } catch (error) {
       this.logger.error(`Failed to generate music: ${error.message}`);
       throw error;
