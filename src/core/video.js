@@ -19,6 +19,7 @@ const path = require("path");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const Logger = require("../utils/logger");
+const tmp = require("tmp");
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -27,27 +28,23 @@ class VideoGenerator {
    * Creates an instance of VideoGenerator.
    *
    * @param {Object} config - Configuration for video generation.
+   * @param {string} config.pexelsApiKey - API key for the Pexels service (required).
    * @param {number} config.width - Width of the video in pixels.
    * @param {number} config.height - Height of the video in pixels.
    * @param {number} config.fps - Frames per second for the video.
    * @param {string} config.outputDir - Directory where the generated video and temporary files will be stored.
-   * @param {{
-   *   type: 'gradient' | 'media',
-   *   font: string,
-   *   fontSize: number,
-   *   gradients?: {
-   *     colors: string[],
-   *     direction: 'vertical' | 'horizontal'
-   * }} config.style - Style configuration for the video, including fonts and gradient properties.
-   * @param {string} [config.pexelsApiKey] - API key for the Pexels service (required for media-based videos).
+   * @param {number} config.fontSize - Size of the font in pixels.
+   * @param {string} config.font - Path to the font file (provide absolute path to the font)
    */
   constructor(config) {
     this.config = { ...VideoGenerator.DEFAULT_CONFIG, ...config };
     this.logger = new Logger();
     this.tempDir = path.join(this.config.outputDir, "temp");
 
-    if (config.style.type === "media" && !config.pexelsApiKey) {
-      throw new Error("Pexels API key is required for media-based videos");
+    if (!config.pexelsApiKey) {
+      throw new Error(
+        "Pexels API key is required to generate media-based videos"
+      );
     }
     if (this.config.fps <= 0 || this.config.fps > 60) {
       throw new Error(`Invalid FPS value: ${this.config.fps}`);
@@ -83,15 +80,7 @@ class VideoGenerator {
     height: 1280,
     fps: 30,
     outputDir: path.join(process.cwd(), "clip-creator-generated"),
-    style: {
-      type: "gradient",
-      font: "Arial",
-      fontSize: 24,
-      gradients: {
-        colors: ["#ff7eb3", "#ff758c"],
-        direction: "vertical",
-      },
-    },
+    fontSize: 32,
   };
 
   /**
@@ -127,8 +116,6 @@ class VideoGenerator {
         this.config.outputDir,
         `final_${uuidv4()}.mp4`
       );
-      this.logger.info(withTransitions + " video path");
-      this.logger.info(audioPath + " audio path");
 
       await this.combineVideoAndAudio(audioPath, withTransitions, outputPath);
 
@@ -148,73 +135,10 @@ class VideoGenerator {
    * @returns {Promise<string>} - Path to the created segment.
    */
   async createSegment(segment) {
+    //Not using tmp as it will mess up the cleaning process. Now this.cleanup method works
     const outputPath = path.join(this.tempDir, `segment_${segment.id}.mp4`);
 
-    if (this.config.style.type === "gradient") {
-      return this.createGradientSegment(segment, outputPath);
-    } else {
-      return this.createMediaSegment(segment, outputPath);
-    }
-  }
-
-  /**
-   * Creates a gradient-based video segment.
-   *
-   * @param {VideoSegment} segment - The segment details.
-   * @param {string} outputPath - Path to save the generated segment.
-   * @returns {Promise<string>} - Path to the gradient video segment.
-   */
-  async createGradientSegment(segment, outputPath) {
-    const canvas = createCanvas(this.config.width, this.config.height);
-    const ctx = canvas.getContext("2d");
-    const frameCount = Math.floor(segment.duration * this.config.fps);
-
-    const gradient = ctx.createLinearGradient(
-      0,
-      0,
-      this.config.style.gradients.direction === "horizontal"
-        ? this.config.width
-        : 0,
-      this.config.style.gradients.direction === "vertical"
-        ? this.config.height
-        : 0
-    );
-
-    this.config.style.gradients.colors.forEach((color, index) => {
-      gradient.addColorStop(
-        index / (this.config.style.gradients.colors.length - 1),
-        color
-      );
-    });
-
-    return new Promise((resolve, reject) => {
-      const command = ffmpeg();
-
-      for (let i = 0; i < frameCount; i++) {
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, this.config.width, this.config.height);
-
-        ctx.font = `${this.config.style.fontSize}px ${this.config.style.font}`;
-        ctx.fillStyle = "white";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        const progress = i / frameCount;
-        const words = segment.text.split(" ");
-        const visibleWords = Math.ceil(words.length * progress);
-        const text = words.slice(0, visibleWords).join(" ");
-
-        ctx.fillText(text, this.config.width / 2, this.config.height / 2);
-
-        command.input(canvas.toBuffer("image/png"));
-      }
-
-      command
-        .fps(this.config.fps)
-        .on("end", () => resolve(outputPath))
-        .on("error", (err) => reject(err))
-        .save(outputPath);
-    });
+    return this.createMediaSegment(segment, outputPath);
   }
 
   async findSuitableVideo(segment) {
@@ -262,7 +186,6 @@ class VideoGenerator {
 
     throw new Error("No suitable media found after multiple search attempts");
   }
-
   /**
    * Creates a media-based video segment.
    *
@@ -278,31 +201,47 @@ class VideoGenerator {
     const { videoFile } = await this.findSuitableVideo(segment);
 
     const response = await fetch(videoFile.link);
+    const tempVideoFile = tmp.fileSync({
+      postfix: ".mp4",
+    });
+
     const buffer = await response.arrayBuffer();
-    const tempVideoPath = path.join(this.tempDir, `temp_${uuidv4()}.mp4`);
-    fs.writeFileSync(tempVideoPath, Buffer.from(buffer));
+
+    fs.writeFileSync(tempVideoFile.name, Buffer.from(buffer));
 
     return new Promise((resolve, reject) => {
-      const escapedText = segment.text.replace(/([':])/g, "\\$1");
-
-      ffmpeg(tempVideoPath)
+      const font =
+        this.config.font ||
+        path.resolve(__dirname, "../../assets/fonts/OpenSans-Regular.ttf");
+      if (!font) {
+        this.logger.error(
+          "Couldn't find the font file. Please check your configuration"
+        );
+        reject(new Error("Font file not found"));
+        return;
+      }
+      //Writing to a text file to escape characters in the command line
+      const textFile = tmp.fileSync({ postfix: ".txt" });
+      fs.writeFileSync(textFile.name, segment.text);
+      const calculatedBoxBorderWidth = 1280 * 0.025;
+      ffmpeg(tempVideoFile.name)
         .inputOptions(this.ffmpegBaseOptions)
         .videoFilters([
           {
             filter: "drawtext",
             options: {
-              text: escapedText,
-              fontfile: path.resolve(
-                __dirname,
-                "../../assets/fonts/OpenSans-Regular.ttf"
-              ),
-              fontsize: this.config.style.fontSize || 48,
-              fontcolor: "white",
+              textfile: textFile.name,
+              fontfile: font,
+              fontsize: this.config.fontSize || 24,
+              fontcolor: "black",
+              box: 1,
+              boxcolor: "white@0.9",
+              boxborderw: calculatedBoxBorderWidth, // Simplified calculation
               x: "(w-text_w)/2",
-              y: "(h-text_h)/2",
-              shadowcolor: "black",
-              shadowx: 2,
-              shadowy: 2,
+              y: "(h-text_h)/2", // Original vertical centering
+              borderw: 2,
+              bordercolor: "black@0.2",
+              enable: `between(t,0,${segment.duration})`,
             },
           },
         ])
@@ -313,15 +252,17 @@ class VideoGenerator {
           "-crf 23",
         ])
         .on("end", () => {
-          this.cleanup([tempVideoPath]);
+          textFile.removeCallback();
+          tempVideoFile.removeCallback();
           resolve(outputPath);
         })
         .on("error", (err, stdout, stderr) => {
           this.logger.error(`Segmentation Error: ${err.message}`);
           this.logger.error(`FFmpeg stderr: ${stderr}`);
+          textFile.removeCallback();
+          tempVideoFile.removeCallback();
           reject(err);
         })
-
         .save(outputPath);
     });
   }

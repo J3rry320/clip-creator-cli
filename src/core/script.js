@@ -77,20 +77,21 @@ class PromptGenerator {
   - Structured format: [Segment X - Timestamp]
   - Fields for each segment:
     * id: Sequential number
-    * text: Concise, factual on-screen text/narration (Min 20-30 words)
+    * text: Concise, factual on-screen text/narration (Min 20-30 words). Ensure the text flows logically from the previous segment and transitions seamlessly into the next.
     * duration: ${PromptGenerator.SEGMENT_DURATION} seconds
     * description: Visual context matching the text
-    * transition: One of: "fade", "slideLeft","slideRight","dissolve", "circleWipe","pixelize","panLeft","panRight","scaleUp","scaleDown","rotate","directionalWipe",
- 
- Content Guidelines:
+    * transition: One of: "fade", "slideLeft","slideRight","dissolve", "circleWipe","pixelize","panLeft","panRight","scaleUp","scaleDown","rotate","directionalWipe"
+  
+  Content Guidelines:
   - When specific terms are provided: 
     * Maintain factual accuracy
     * Include relevant statistics/dates
     * Contextualize importance
+  - Ensure logical continuity between segments by maintaining a cohesive narrative or flow of ideas.
   - Verify all factual claims against known information
   - For political content: Maintain neutral tone
-
- Output MUST be parseable JSON with exact structure:
+  
+  Output MUST be parseable JSON with exact structure:
   {
     "segments": [
       {
@@ -249,7 +250,7 @@ class PromptGenerator {
       return this.validateResponse(completion);
     } catch (error) {
       this.logger.error(`Attempt ${attempt + 1} failed: ${error.message}`);
-
+      //Sometimes the LLM hallucinates and returns bad response which cannot be parsed. So we retry
       if (this.shouldRetry(error) && attempt < PromptGenerator.MAX_RETRIES) {
         await this.delay(1000 * (attempt + 1)); // Exponential backoff
         return this.generateScript(config, attempt + 1);

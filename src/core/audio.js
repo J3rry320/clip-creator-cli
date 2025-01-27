@@ -39,24 +39,29 @@ class AudioManager {
   static DEFAULT_CONFIG = {
     defaultVolume: 0.3,
     outputFormat: "mp3",
-    tempDir: path.join(process.cwd(), "temp", "audio"),
+    tempDir: path.join(process.cwd(), "clip-creator-generated", "audio"),
     fadeInDuration: 2,
-    fadeOutDuration: 2,
+    fadeOutDuration: 4,
   };
 
   /**
    * Category-to-search-term mappings for generating relevant audio.
    */
   CATEGORY_MAPPINGS = {
-    tech: "technology background music",
-    sports: "energetic sports music",
-    politics: "news background music",
-    entertainment: "upbeat entertainment music",
-    education: "educational background music",
-    gaming: "game music",
-    travel: "travel background music",
-    wellness: "calm meditation music",
-    news: "news background music",
+    "Science & Technology": "futuristic tech sounds", // Reflects innovation and tech
+    "Sports & Fitness": "energetic sports sounds", // Suitable for sports or fitness-related content
+    "Government & Politics": "serious news music", // Matches the tone of political topics
+    "Entertainment & Celebrities": "pop culture music", // Reflects modern and pop culture vibes
+    "Education & Learning": "study focus music", // Supports educational environments
+    "Video Games & Esports": "gaming action sounds", // Matches gaming and esports intensity
+    "Travel & Tourism": "adventure travel music", // Reflects exploration and travel vibes
+    "Health & Wellness": "relaxing meditation music", // Matches wellness and mindfulness themes
+    "World News": "global news background music", // Appropriate for global news coverage
+    "Business & Finance": "corporate office music", // Reflects a formal and financial tone
+    "Lifestyle & Culture": "modern lifestyle music", // Fits modern, stylish, and cultural themes
+    "Art & Design": "inspirational creative music", // Matches the artistic and innovative mood
+    "Environment & Sustainability": "nature ambient sounds", // Reflects environmental and eco-friendly themes
+    "Food & Cooking": "cozy kitchen sounds", // Evokes a homely and joyful atmosphere
   };
 
   /**
@@ -134,7 +139,7 @@ class AudioManager {
         `${this.FREESOUND_API_URL}?${new URLSearchParams({
           query: searchTerm,
           token: this.config.freesoundApiKey,
-          filter: "duration:[0 TO 60]",
+          filter: "duration:[60 TO *]",
           sort: "rating_desc",
           fields: "id,name,previews,duration,username",
         })}`
