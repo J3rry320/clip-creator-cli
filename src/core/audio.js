@@ -14,11 +14,16 @@ class AudioManager {
   /**
    * Initializes the AudioManager instance with a given configuration.
    * @param {Object} config - Configuration object for the AudioManager.
-   * @param {string} config.freesoundApiKey - API key for accessing the FreeSound API.
+   * @param {string} config.freeSoundKey - API key for accessing the FreeSound API.
+   * @param {string} [config.outputDir] - Directory Path to store the output. Defaults to the current_working_directory/clip-creator-generated/audio
+   * @param {number} [config.fadeInDuration] - The audio fade In Duration in seconds. Defaults to 2 seconds
+   * @param {number} [config.fadeOutDuration] - The audio fade Out Duration in seconds. Defaults to 4 seconds
+   * @param {number} [config.volume] - The default volume. Defaults to 0.3. Maximum value 1.
+   * @param {string} [config.outputFormat] - The output format of the audio output. Defaults to .mp3
    * @throws {Error} If the FreeSound API key is not provided.
    */
   constructor(config) {
-    if (!config.freesoundApiKey) {
+    if (!config.freeSoundKey) {
       throw new Error("FreeSound API key is required");
     }
 
@@ -37,9 +42,9 @@ class AudioManager {
    * @static
    */
   static DEFAULT_CONFIG = {
-    defaultVolume: 0.3,
+    volume: 0.3,
     outputFormat: "mp3",
-    tempDir: path.join(process.cwd(), "clip-creator-generated", "audio"),
+    outputDir: path.join(process.cwd(), "clip-creator-generated", "audio"),
     fadeInDuration: 2,
     fadeOutDuration: 4,
   };
@@ -68,8 +73,8 @@ class AudioManager {
    * Ensures the temporary directory for audio processing exists.
    */
   ensureTempDirectory() {
-    if (!fs.existsSync(this.config.tempDir)) {
-      fs.mkdirSync(this.config.tempDir, { recursive: true });
+    if (!fs.existsSync(this.config.outputDir)) {
+      fs.mkdirSync(this.config.outputDir, { recursive: true });
     }
   }
 
@@ -111,6 +116,7 @@ class AudioManager {
         .audioFilters([
           `afade=t=in:st=0:d=${fadeInDuration}`,
           `afade=t=out:st=${fadeOutStart}:d=${fadeOutDuration}`,
+          `volume=${this.config.volume}`,
         ])
         .output(outputPath)
         .on("end", () => resolve(outputPath))
@@ -142,7 +148,7 @@ class AudioManager {
       const searchResponse = await fetch(
         `${this.FREESOUND_API_URL}?${new URLSearchParams({
           query: searchTerm,
-          token: this.config.freesoundApiKey,
+          token: this.config.freeSoundKey,
           filter: "duration:[60 TO *]",
           sort: "rating_desc",
           fields: "id,name,previews,duration,username",
@@ -167,11 +173,11 @@ class AudioManager {
         );
       const musicId = uuidv4();
       const rawPath = path.join(
-        this.config.tempDir,
+        this.config.outputDir,
         `${musicId}_raw.${this.config.outputFormat}`
       );
       const outputPath = path.join(
-        this.config.tempDir,
+        this.config.outputDir,
         `${musicId}.${this.config.outputFormat}`
       );
       this.logger

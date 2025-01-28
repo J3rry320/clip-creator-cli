@@ -27,7 +27,7 @@ class VideoGenerator {
    * Creates an instance of VideoGenerator.
    *
    * @param {Object} config - Configuration for video generation.
-   * @param {string} config.pexelsApiKey - API key for the Pexels service (required).
+   * @param {string} config.pexelsKey - API key for the Pexels service (required).
    * @param {number} config.width - Width of the video in pixels.
    * @param {number} config.height - Height of the video in pixels.
    * @param {number} config.fps - Frames per second for the video.
@@ -40,7 +40,7 @@ class VideoGenerator {
     this.logger = new Logger();
     this.tempDir = path.join(this.config.outputDir, "temp");
 
-    if (!config.pexelsApiKey) {
+    if (!config.pexelsKey) {
       throw new Error(
         "Pexels API key is required to generate media-based videos"
       );
@@ -49,8 +49,8 @@ class VideoGenerator {
       throw new Error(`Invalid FPS value: ${this.config.fps}`);
     }
 
-    if (config.pexelsApiKey) {
-      this.pexelsClient = createClient(config.pexelsApiKey);
+    if (config.pexelsKey) {
+      this.pexelsClient = createClient(config.pexelsKey);
     }
 
     this.TRANSITION_DURATION = 0.5; // seconds
@@ -103,12 +103,6 @@ class VideoGenerator {
 
   async generateVideo(segments, audioPath) {
     try {
-      this.logger
-        .terminal()
-        .yellow(
-          "[INFO] 🎥 Searching Pexels for video assets and adding text overlays...\n"
-        );
-
       const segmentPaths = await Promise.all(
         segments.map((segment) => this.createSegment(segment))
       );
@@ -217,8 +211,8 @@ class VideoGenerator {
 
     return new Promise((resolve, reject) => {
       const font =
-        this.config.font ||
-        path.resolve(__dirname, "../../assets/fonts/OpenSans-Regular.ttf");
+        path.resolve(this.config.font) ||
+        path.resolve(__dirname, "../assets/fonts/OpenSans-Regular.ttf");
       if (!font) {
         this.logger.error(
           "Couldn't find the font file. Please check your configuration"
@@ -229,7 +223,7 @@ class VideoGenerator {
       //Writing to a text file to escape characters in the command line
       const textFile = tmp.fileSync({ postfix: ".txt" });
       fs.writeFileSync(textFile.name, segment.text);
-      const calculatedBoxBorderWidth = 1280 * 0.025;
+      const calculatedBoxBorderWidth = this.config.height * 0.025;
       ffmpeg(tempVideoFile.name)
         .inputOptions(this.ffmpegBaseOptions)
         .videoFilters([
@@ -285,7 +279,7 @@ class VideoGenerator {
     try {
       this.logger
         .terminal()
-        .blue(
+        .brightBlue(
           "[INFO] ✂️  Combining multiple video clips with transitions...\n"
         );
 
@@ -365,15 +359,8 @@ class VideoGenerator {
             "-c:v libx264",
             `-r ${this.config.fps}`,
           ])
-          .on("start", () => {
-            this.logger.info(
-              `Started with combining ${videoFiles.length} segements`
-            );
-          })
+
           .on("end", () => {
-            this.logger.info(
-              `Successfully combined ${videoFiles.length} segments`
-            );
             resolve(outputPath);
           })
           .on("error", (err, stdout, stderr) => {

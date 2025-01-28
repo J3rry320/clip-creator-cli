@@ -77,7 +77,7 @@ class PromptGenerator {
   - Structured format: [Segment X - Timestamp]
   - Fields for each segment:
     * id: Sequential number
-    * text: Concise, factual on-screen text/narration (Min 20-30 words). Ensure the text flows logically from the previous segment and transitions seamlessly into the next.
+    * text: Concise, factual on-screen text/narration (Min 15 words). Ensure the text flows logically from the previous segment and transitions seamlessly into the next.
     * duration: ${PromptGenerator.SEGMENT_DURATION} seconds
     * description: Visual context matching the text
     * transition: One of: "fade", "slideLeft","slideRight","dissolve", "circleWipe","pixelize","panLeft","panRight","scaleUp","scaleDown","rotate","directionalWipe"
@@ -112,7 +112,6 @@ class PromptGenerator {
    * @param {number} config.duration - Total duration of the video in seconds.
    * @param {string} config.category - The category of the video (e.g., "education", "entertainment").
    * @param {string} config.tone - The tone of the video (e.g., "informative", "humorous").
-   * @param {string} config.style - The style of the video (e.g., "media", "text-based").
    * @returns {string} The generated user prompt.
    */
   static generateUserPrompt(config) {
@@ -124,12 +123,9 @@ class PromptGenerator {
     
     Requirements:
     1. Target audience: ${config.category} viewers
-    2. Tone: ${config.tone}${
-      config.style === "media"
-        ? "\n3. Include specific visual references"
-        : "\n3. Focus on text presentation"
-    }
-    4. Key elements: ${config.keyTerms.join(", ") || "None provided"}
+    2. Tone: ${config.tone}
+    3. Include specific visual references
+    4. Key elements: ${config?.keyTerms?.join(", ") || "None provided"}
     5. Transitions: Vary between segments
     6. Accuracy: ${
       config.requireFactChecking
@@ -160,11 +156,10 @@ class PromptGenerator {
    * @param {number} config.duration - Total video duration in seconds
    * @param {string} config.category - Video category/type
    * @param {string} config.tone - Desired narrative tone
-   * @param {string} config.style - Visual presentation style
    * @throws {Error} For invalid configuration parameters
    */
   validateConfig(config) {
-    const requiredFields = ["duration", "category", "tone", "style"];
+    const requiredFields = ["duration", "category", "tone"];
     const missing = requiredFields.filter((field) => !config[field]);
 
     if (missing.length > 0) {
@@ -227,7 +222,7 @@ class PromptGenerator {
    * @param {number} config.duration - Total duration in seconds
    * @param {string} config.category - Video category/type
    * @param {string} config.tone - Desired narrative tone
-   * @param {string} config.style - Visual presentation style
+
    * @param {string} config.topic - Main video topic/theme
    * @param {string[]} config.keyTerms - Key terms to include
    * @param {boolean} config.requireFactChecking - Fact verification flag
@@ -245,12 +240,12 @@ class PromptGenerator {
           { role: "system", content: PromptGenerator.SYSTEM_PROMPT },
           { role: "user", content: PromptGenerator.generateUserPrompt(config) },
         ],
-        model: "mixtral-8x7b-32768",
-        temperature: 1,
+        model: "llama3-70b-8192",
+        temperature: 1.5,
         max_completion_tokens: 1024,
-        top_p: 1,
         stream: false,
         stop: null,
+        response_format: { type: "json_object" },
       });
       return this.validateResponse(completion);
     } catch (error) {
