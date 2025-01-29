@@ -10,7 +10,7 @@ const {
   getCategoryDescription,
   getToneDescription,
 } = require("../src/utils/messageGenerator");
-const { createVideo } = require("../src/core");
+const { createVideo } = require("../src/");
 const { getNoiseLessConfig } = require("../src/utils");
 
 const logger = new Logger();

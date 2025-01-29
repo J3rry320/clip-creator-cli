@@ -243,4 +243,4 @@ class AudioManager {
   }
 }
 
-module.exports = AudioManager;
+module.exports = { AudioManager };
