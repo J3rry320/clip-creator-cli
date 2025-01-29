@@ -12,6 +12,7 @@ const {
 } = require("../src/utils/messageGenerator");
 const { createVideo } = require("../src/");
 const { getNoiseLessConfig } = require("../src/utils");
+require("dotenv").config();
 
 const logger = new Logger();
 

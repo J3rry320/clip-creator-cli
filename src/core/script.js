@@ -28,7 +28,7 @@ const SegmentSchema = z.object({
  * @type {z.ZodSchema}
  */
 const ScriptSchema = z.object({
-  segments: z.array(SegmentSchema).min(3),
+  segments: z.array(SegmentSchema).min(1),
 });
 
 class PromptGenerator {
@@ -193,7 +193,7 @@ class PromptGenerator {
       const result = ScriptSchema.safeParse(parsed);
 
       if (!result.success) {
-        this.logger.error("Validation errors:", result.error.format());
+        this.logger.error(`Validation errors: ${result.error.format()}`);
         throw new Error("Invalid JSON structure");
       }
       this.logger
@@ -248,6 +248,7 @@ class PromptGenerator {
         stop: null,
         response_format: { type: "json_object" },
       });
+
       return this.validateResponse(completion);
     } catch (error) {
       this.logger.error(`Attempt ${attempt + 1} failed: ${error.message}`);

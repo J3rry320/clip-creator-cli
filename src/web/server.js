@@ -41,7 +41,10 @@ app.get("/api/create-video", (req, res) => {
   if (config.fadeOutDuration)
     args.push("--fadeOutDuration", config.fadeOutDuration);
 
-  const cliPath = path.resolve(__dirname, "../../bin/cli.js");
+  const cliPath = path.resolve(
+    __dirname,
+    process.env.NODE_ENV === "dev" ? "../../bin/cli.js" : "cli.js"
+  );
 
   logger.info(`Executing CLI: node ${cliPath} ${args.join(" ")}`);
   const heartbeat = setInterval(() => {
@@ -179,8 +182,10 @@ function parseOutput(output) {
   return filteredLines;
 }
 function getResponseFromCLI(command, res) {
-  const cliPath = path.resolve(__dirname, "../../bin/cli.js");
-
+  const cliPath = path.resolve(
+    __dirname,
+    process.env.NODE_ENV === "dev" ? "../../bin/cli.js" : "cli.js"
+  );
   // 2. Create the child process
   const cliProcess = spawn("node", [cliPath, command], {
     stdio: "pipe",

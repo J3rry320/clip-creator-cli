@@ -80,7 +80,10 @@ class VideoGenerator {
     fps: 30,
     outputDir: path.join(process.cwd(), "clip-creator-generated"),
     fontSize: 32,
-    font: path.resolve(__dirname, "../assets/fonts/OpenSans-Regular.ttf"),
+    font:
+      process.env.NODE_ENV === "dev"
+        ? path.resolve(__dirname, "../assets/fonts/OpenSans-Regular.ttf")
+        : path.resolve(__dirname, "./assets/fonts/OpenSans-Regular.ttf"),
   };
 
   /**
