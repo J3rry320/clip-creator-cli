@@ -160,12 +160,12 @@ program
 program
   .command("web")
   .description("Start web interface")
-  .option("-p, --port <number>", "Port to run the server on", 3000)
+  .option("-p, --port <number>", "Port to run the server on", 3003)
   .action(async (options) => {
     try {
-      require("../src/web/server");
+      require("../src/web/server").initializeServer(options.port);
       STYLES.success(
-        `\n✅ Web interface running at http://localhost:${options.port}\n`
+        `\n✅ Web interface running at http://localhost:${options.port}/index.html\n`
       );
     } catch (error) {
       STYLES.error(`\n⚠️  Error starting web interface: ${error.message}\n`);

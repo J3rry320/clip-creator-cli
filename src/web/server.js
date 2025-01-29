@@ -43,7 +43,7 @@ app.get("/api/create-video", (req, res) => {
 
   const cliPath = path.resolve(__dirname, "../../bin/cli.js");
 
-  console.log("Executing CLI:", "node", cliPath, ...args);
+  logger.info(`Executing CLI: node ${cliPath} ${args.join(" ")}`);
   const heartbeat = setInterval(() => {
     res.write(
       `data: ${JSON.stringify({ type: "ping", message: "keep-alive" })}\n\n`
@@ -75,7 +75,7 @@ app.get("/api/create-video", (req, res) => {
 
   cliProcess.stderr.on("data", (data) => {
     error += data.toString();
-    console.error("CLI Error:", data.toString());
+    logger.error(`CLI Error:  ${data.toString()}`);
     res.write(
       `data: ${JSON.stringify({ type: "error", message: data.toString() })}\n\n`
     );
@@ -137,7 +137,7 @@ app.get("/api/video/:filepath", (req, res) => {
       "Content-Type": "video/mp4",
     });
     req.on("close", () => {
-      console.log("Client disconnected, stopping stream...");
+      logger.info("Client disconnected, stopping stream...");
       fileStream.destroy();
     });
 
@@ -224,7 +224,9 @@ function getResponseFromCLI(command, res) {
     res.status(500).json({ error: "Failed to start CLI process" });
   });
 }
-const PORT = 3003;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+
+const initializeServer = (port) => {
+  app.listen(port || 3003);
+};
+module.exports = { initializeServer };

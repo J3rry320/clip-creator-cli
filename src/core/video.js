@@ -300,12 +300,12 @@ class VideoGenerator {
             })
             .save(outputPath);
         } catch (ffmpegError) {
-          console.error("Unexpected FFmpeg error:", ffmpegError);
+          this.logger.error(`Unexpected FFmpeg error: ${ffmpegError}`);
           reject(ffmpegError);
         }
       });
     } catch (error) {
-      console.error("createMediaSegment error:", error);
+      this.logger.error(`createMediaSegment error: ${error}`);
       throw error;
     }
   }

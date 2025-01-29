@@ -498,7 +498,6 @@
             eventSource.close();
             if (data.videoPath) {
               const videoUrl = await getVideoUsingFetch(data.videoPath);
-              console.log({ videoUrl });
               videoContainer.classList.remove("hidden");
               document.getElementById("outputVideo").src = videoUrl;
               videoContainer.scrollIntoView()
