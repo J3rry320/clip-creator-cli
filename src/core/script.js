@@ -5,7 +5,7 @@ const { z } = require("zod");
 
 const SegmentSchema = z.object({
   id: z.number().int().positive(),
-  text: z.string().min(15),
+  text: z.string().min(10),
   duration: z.literal(5),
   description: z.string().min(5),
   transition: z.enum([
@@ -77,7 +77,7 @@ class PromptGenerator {
   - Structured format: [Segment X - Timestamp]
   - Fields for each segment:
     * id: Sequential number
-    * text: Concise, factual on-screen text/narration (Min 15 words). Ensure the text flows logically from the previous segment and transitions seamlessly into the next.
+    * text: Concise, factual on-screen text/narration (Min 10 words). Ensure the text flows logically from the previous segment and transitions seamlessly into the next.
     * duration: ${PromptGenerator.SEGMENT_DURATION} seconds
     * description: Visual context matching the text
     * transition: One of: "fade", "slideLeft","slideRight","dissolve", "circleWipe","pixelize","panLeft","panRight","scaleUp","scaleDown","rotate","directionalWipe"
@@ -146,6 +146,7 @@ class PromptGenerator {
       "Invalid JSON response",
       "Empty response from model",
       "Unexpected end of JSON input",
+      "400",
     ];
     return retryableErrors.some((e) => error.message.includes(e));
   }

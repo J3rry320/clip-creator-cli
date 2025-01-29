@@ -112,13 +112,19 @@ program
     "Duration for fade-out effect in seconds",
     parseFloat
   )
+  .option("--webRunner", "Command for the web runner to skip CLI inputs")
 
   .action(async (options) => {
     try {
-      const config = await loadConfig(options.config);
-      const finalConfig = await getConfiguration(options, config);
-      await validateCoreConfig(finalConfig);
-      await processVideoCreation(finalConfig);
+      if (options.webRunner) {
+        await validateCoreConfig(options);
+        await processVideoCreation(options);
+      } else {
+        const config = await loadConfig(options.config);
+        const finalConfig = await getConfiguration(options, config);
+        await validateCoreConfig(finalConfig);
+        await processVideoCreation(finalConfig);
+      }
     } catch (error) {
       STYLES.error(`\n⚠️  Error: ${error.message}\n`);
       process.exit(1);
@@ -127,26 +133,45 @@ program
 
 program
   .command("list-categories")
+  .option("-v, --verbose", "Display available content tones with descriptions")
   .description("Display available content categories with descriptions")
-  .action(() => {
+  .action((option) => {
     term.bold.cyan("Available Categories:\n");
     CATEGORIES.forEach((category) => {
       term.bold(`\n${category}`);
-      term(`\n${getCategoryDescription(category)}\n`);
+      (option.verbose || option.v) &&
+        term(`\n${getCategoryDescription(category)}\n`);
     });
+    process.exit(0);
   });
 
 program
   .command("list-tones")
-  .description("Display available content tones with descriptions")
-  .action(() => {
+  .option("-v, --verbose", "Display available content tones with descriptions")
+  .description("Display available content tones")
+  .action((option) => {
     term.bold.cyan("Available Tones:\n");
     TONES.forEach((tone) => {
       term.bold(`\n${tone}`);
-      term(`\n${getToneDescription(tone)}\n`);
+      (option.verbose || option.v) && term(`\n${getToneDescription(tone)}\n`);
     });
+    process.exit(0);
   });
-
+program
+  .command("web")
+  .description("Start web interface")
+  .option("-p, --port <number>", "Port to run the server on", 3000)
+  .action(async (options) => {
+    try {
+      require("../src/web/server");
+      STYLES.success(
+        `\n✅ Web interface running at http://localhost:${options.port}\n`
+      );
+    } catch (error) {
+      STYLES.error(`\n⚠️  Error starting web interface: ${error.message}\n`);
+      process.exit(1);
+    }
+  });
 program.parse(process.argv);
 
 process.on("exit", () => {
@@ -467,15 +492,10 @@ async function processVideoCreation(config) {
   STYLES.success("✅  Starting video creation process...\n");
   const noiseLessConfig = getNoiseLessConfig(config);
   const output = await createVideo(noiseLessConfig);
-  logger.terminal().green("\n✅ Final output successfully created!\n");
   logger.terminal().green(logger.drawAsciiArt("Success !"));
   logger
     .terminal()
-    .white(
-      `\n📂 Your final video is ready at: ${logger
-        .terminal()
-        .bold.brightGreen(`${output}\n`)} `
-    );
+    .bold.brightGreen(`\n📂 Your final video is ready at: ${output}\n`);
   logger
     .terminal()
     .bgBlue()

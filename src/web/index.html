@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clip Creator Web Interface</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-5xl font-bold text-center mb-10 text-blue-800">
+        🎬 Clip Creator
+      </h1>
+
+      <div class="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
+        <form id="clipForm" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Required API Keys -->
+            <div class="space-y-4">
+              <h2 class="text-2xl font-semibold text-gray-800">
+                Required API Keys 🔑
+              </h2>
+              <div class="relative">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >FreeSound API Key</label
+                  >
+                  <input
+                    type="password"
+                    name="freeSoundKey"
+                    required
+                    placeholder="Your Freesound.org API Key"
+                    class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-lg focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="absolute inset-y-0 z-100 bg-white right-2 top-5 text-sm text-blue-600 hover:underline"
+                  onclick="togglePasswordVisibility(this)"
+                >
+                  Show
+                </button>
+              </div>
+              <div class="relative">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >GROQ API Key</label
+                  >
+                  <input
+                    type="password"
+                    name="groqKey"
+                    placeholder="Your GROQ API Key"
+                    required
+                    class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-lg focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="absolute inset-y-0 right-2 z-100 bg-white top-5 text-sm text-blue-600 hover:underline"
+                  onclick="togglePasswordVisibility(this)"
+                >
+                  Show
+                </button>
+              </div>
+              <div class="relative">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Pexels API Key</label
+                  >
+                  <input
+                    type="password"
+                    name="pexelsKey"
+                    placeholder="Your Pexels API Key"
+                    required
+                    class="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-lg focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="absolute inset-y-0 right-2 z-100 bg-white top-5 text-sm text-blue-600 hover:underline"
+                  onclick="togglePasswordVisibility(this)"
+                >
+                  Show
+                </button>
+              </div>
+            </div>
+
+            <!-- Required Content Settings -->
+            <div class="space-y-4">
+              <h2 class="text-2xl font-semibold text-gray-800">
+                Content Settings 🎥
+              </h2>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Category</label
+                >
+                <select
+                  name="category"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">Select a category</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Tone</label
+                >
+                <select
+                  name="tone"
+                  required
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">Select a tone</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Topic</label
+                >
+                <input
+                  type="text"
+                  name="topic"
+                  required
+                  placeholder="e.g., AI advancements"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Duration (seconds)</label
+                >
+                <input
+                  type="number"
+                  name="duration"
+                  required
+                  min="10"
+                  max="60"
+                  value="30"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Advanced Settings Toggle -->
+          <div class="pt-4">
+            <button
+              type="button"
+              id="toggleAdvanced"
+              class="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Show Advanced Settings
+            </button>
+          </div>
+
+          <!-- Advanced Settings -->
+          <div id="advancedSettings" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <h2 class="text-2xl font-semibold text-gray-700">
+                  📀 Video Settings
+                </h2>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="requireFactChecking"
+                    class="h-4 w-4 text-blue-600"
+                  />
+                  <label class="ml-2 text-sm text-gray-700"
+                    >Enable fact-checking</label
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Key Terms (comma-separated)</label
+                  >
+                  <input
+                    type="text"
+                    name="keyTerms"
+                    placeholder="AI, machine learning"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Output Directory</label
+                  >
+                  <input
+                    type="text"
+                    name="outputDir"
+                    placeholder="clip-creator-media"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <h2 class="text-2xl font-semibold text-gray-700">
+                  📟 Technical Settings
+                </h2>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Font Size (12-72)</label
+                  >
+                  <input
+                    type="number"
+                    name="fontSize"
+                    min="12"
+                    max="72"
+                    value="24"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >FPS (1-60)</label
+                  >
+                  <input
+                    type="number"
+                    name="fps"
+                    min="1"
+                    max="60"
+                    value="30"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Height (px)</label
+                  >
+                  <input
+                    type="number"
+                    name="height"
+                    min="240"
+                    max="1920"
+                    value="720"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700"
+                    >Width (px)</label
+                  >
+                  <input
+                    type="number"
+                    name="width"
+                    min="240"
+                    max="1920"
+                    value="1280"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-gray-700">
+              🎼 Audio Settings
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Volume (0-1)</label
+                >
+                <input
+                  type="number"
+                  name="volume"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value="0.5"
+                  class="mt-1 block w-full rounded-md border-black shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Fade In Duration (s)</label
+                >
+                <input
+                  type="number"
+                  name="fadeInDuration"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value="0.5"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700"
+                  >Fade Out Duration (s)</label
+                >
+                <input
+                  type="number"
+                  name="fadeOutDuration"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value="0.5"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-lg p-3 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-center pt-6">
+            <button
+              type="submit"
+              class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg px-8 py-3 rounded-lg hover:shadow-lg hover:scale-105"
+            >
+              🎬 Create Video
+            </button>
+          </div>
+        </form>
+
+        <!-- Progress and Output Section -->
+        <div id="outputSection" class="hidden mt-8 space-y-4">
+          <div
+            class="bg-black text-green-400 p-4 rounded-lg font-mono text-sm h-64 overflow-y-auto"
+            id="logsContainer"
+          ></div>
+
+          <div id="videoContainer" class="hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+              🎥 Generated Video
+            </h2>
+            <video
+              id="outputVideo"
+              controls
+              class="w-full rounded-lg shadow-lg"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script async>
+    function togglePasswordVisibility(button) {
+      const parent = button.previousElementSibling; // Get the input before the button
+      const input = parent.querySelector("input");
+      if (input.type === "password") {
+        input.type = "text";
+        button.textContent = "Hide";
+      } else {
+        input.type = "password";
+        button.textContent = "Show";
+      }
+    }
+    const categorySelect = document.querySelector('select[name="category"]');
+    const toneSelect = document.querySelector('select[name="tone"]');
+
+    async function initializeForm() {
+      try {
+        const [categoriesResponse, tonesResponse] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/tones"),
+        ]);
+
+        const categories = await categoriesResponse.json();
+        const tones = await tonesResponse.json();
+
+        // Clear and populate category select
+        categorySelect.innerHTML =
+          '<option value="">Select a category</option>';
+        categories.data.forEach((category) => {
+          const option = new Option(category, category);
+          categorySelect.add(option);
+        });
+
+        // Clear and populate tone select
+        toneSelect.innerHTML = '<option value="">Select a tone</option>';
+        tones.data.forEach((tone) => {
+          const option = new Option(tone, tone);
+          toneSelect.add(option);
+        });
+      } catch (error) {
+        console.error("Failed to initialize form:", error);
+      }
+    }
+
+    // Toggle advanced settings
+    const toggleAdvanced = document.getElementById("toggleAdvanced");
+    const advancedSettings = document.getElementById("advancedSettings");
+
+    toggleAdvanced.addEventListener("click", () => {
+      advancedSettings.classList.toggle("hidden");
+      toggleAdvanced.textContent = advancedSettings.classList.contains("hidden")
+        ? "Show Advanced Settings"
+        : "Hide Advanced Settings";
+    });
+
+    const form = document.getElementById("clipForm");
+    const outputSection = document.getElementById("outputSection");
+
+    const videoContainer = document.getElementById("videoContainer");
+    const outputVideo = document.getElementById("outputVideo");
+    const logsContainer = document.getElementById("logsContainer");
+    async function getVideoUsingFetch(filePath) {
+      try {
+        // Encode the file path to handle special characters
+        logsContainer.innerHTML +=
+          '<div class="text-blue-500">Converting Video for your preview</div>';
+        const encodedPath = encodeURIComponent(filePath);
+        const response = await fetch(`/api/video/${encodedPath}`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // For browser: create a blob URL to play the video
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+      } catch (error) {
+        console.error("Error fetching video:", error);
+        throw error;
+      }
+    }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Form validation remains the same
+      const formData = new FormData(form);
+      const config = Object.fromEntries(formData.entries());
+
+      // Validate required fields
+      const requiredFields = [
+        "freeSoundKey",
+        "groqKey",
+        "pexelsKey",
+        "category",
+        "tone",
+        "topic",
+        "duration",
+      ];
+      const missingFields = requiredFields.filter((field) => !config[field]);
+
+      if (missingFields.length > 0) {
+        alert(
+          `Please fill in all required fields: ${missingFields.join(", ")}`
+        );
+        return;
+      }
+
+      // Numeric validation remains the same
+      const numericValidation = {
+        duration: { min: 10, max: 60 },
+        fontSize: { min: 12, max: 72 },
+        fps: { min: 1, max: 60 },
+        height: { min: 240, max: 1920 },
+        width: { min: 240, max: 1920 },
+        volume: { min: 0, max: 1 },
+        fadeInDuration: { min: 0, max: 5 },
+        fadeOutDuration: { min: 0, max: 5 },
+      };
+
+      for (const [field, range] of Object.entries(numericValidation)) {
+        if (config[field]) {
+          const value = Number(config[field]);
+          if (isNaN(value) || value < range.min || value > range.max) {
+            alert(`${field} must be between ${range.min} and ${range.max}`);
+            return;
+          }
+        }
+      }
+
+      if (config.keyTerms) {
+        config.keyTerms = config.keyTerms.split(",").map((term) => term.trim());
+      }
+
+      // Show output section and create logs container
+      outputSection.classList.remove("hidden");
+      videoContainer.classList.add("hidden");
+
+      // Replace progress bar with logs container
+
+      logsContainer.innerHTML = "";
+      logsContainer.scrollIntoView();
+
+      try {
+        const eventSource = new EventSource(
+          `/api/create-video?config=${encodeURIComponent(
+            JSON.stringify(config)
+          )}`
+        );
+
+        eventSource.onmessage = async (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === "log") {
+            logsContainer.innerHTML += `<div>${data.message}</div>`;
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+          } else if (data.type === "complete") {
+            eventSource.close();
+            if (data.videoPath) {
+              const videoUrl = await getVideoUsingFetch(data.videoPath);
+              console.log({ videoUrl });
+              videoContainer.classList.remove("hidden");
+              document.getElementById("outputVideo").src = videoUrl;
+              videoContainer.scrollIntoView()
+            }
+          }
+        };
+        eventSource.onerror = (err) => {
+          console.log("Error", err);
+          eventSource.close();
+          logsContainer.innerHTML +=
+            '<div class="text-red-500">Connection lost</div>';
+        };
+      } catch (error) {
+        logsContainer.innerHTML += `<div class="text-red-500">Error: ${error.message}</div>`;
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", initializeForm);
+  </script>
+</html>

@@ -50,24 +50,38 @@ class AudioManager {
   };
 
   /**
-   * Category-to-search-term mappings for generating relevant audio.
+   * Category-to-search-term mappings with mapping to multiple set of terms for generating relevant audio.
    */
   CATEGORY_MAPPINGS = {
-    "Science & Technology": "futuristic tech sounds", // Reflects innovation and tech
-    "Sports & Fitness": "energetic sports sounds", // Suitable for sports or fitness-related content
-    "Government & Politics": "serious news music", // Matches the tone of political topics
-    "Entertainment & Celebrities": "pop culture music", // Reflects modern and pop culture vibes
-    "Education & Learning": "study focus music", // Supports educational environments
-    "Video Games & Esports": "gaming action sounds", // Matches gaming and esports intensity
-    "Travel & Tourism": "adventure travel music", // Reflects exploration and travel vibes
-    "Health & Wellness": "relaxing meditation music", // Matches wellness and mindfulness themes
-    "World News": "global news background music", // Appropriate for global news coverage
-    "Business & Finance": "corporate office music", // Reflects a formal and financial tone
-    "Lifestyle & Culture": "modern lifestyle music", // Fits modern, stylish, and cultural themes
-    "Art & Design": "inspirational creative music", // Matches the artistic and innovative mood
-    "Environment & Sustainability": "nature ambient sounds", // Reflects environmental and eco-friendly themes
-    "Food & Cooking": "cozy kitchen sounds", // Evokes a homely and joyful atmosphere
+    "Science & Technology": ["electronic futuristic", "ambient digital"],
+    "Sports & Fitness": ["energetic upbeat", "fast rhythmic"],
+    "Government & Politics": ["serious news", "dramatic orchestral"],
+    "Entertainment & Celebrities": ["trendy upbeat", "pop dance"],
+    "Education & Learning": ["calm acoustic", "soft background"],
+    "Video Games & Esports": ["retro chiptune", "intense cinematic"],
+    "Travel & Tourism": ["adventure nature", "world upbeat"],
+    "Health & Wellness": ["meditation relaxing", "calm ambient"],
+    "World News": ["news background", "broadcast serious"],
+    "Business & Finance": ["corporate serious", "tech background"],
+    "Lifestyle & Culture": ["lo-fi chill", "smooth modern"],
+    "Art & Design": ["creative atmospheric", "abstract instrumental"],
+    "Environment & Sustainability": ["nature sounds", "peaceful ambient"],
+    "Food & Cooking": ["warm jazzy", "cozy kitchen"],
   };
+
+  /**
+   * Retrieves a list of search terms for a category to allow retries.
+   * @param {string} category - The category name.
+   * @returns {Array<string>} - Array of search terms for retries.
+   */
+  getSearchTerms(category) {
+    return (
+      this.CATEGORY_MAPPINGS[category] || [
+        "background music",
+        "cinematic instrumental",
+      ]
+    );
+  }
 
   /**
    * Ensures the temporary directory for audio processing exists.
@@ -129,93 +143,102 @@ class AudioManager {
   }
 
   /**
-   * Generates a music file based on the provided category and parameters.
+   * Generates a music file based on the provided category and parameters. Attempts to retry calling the function if the API returns 404 or errors out
    * @param {Object} params - Parameters for generating music.
    * @param {string} params.category - Category for the music (e.g., "tech", "sports").
    * @returns {Promise<String>} The path of the generated music file.
    * @throws {Error} If no music is found or an error occurs during processing.
    */
   async generateMusic(params) {
-    try {
-      this.logger
-        .terminal()
-        .cyan("[INFO] 🎵 Looking up audio from FreeSound.org...\n");
+    const MAX_RETRIES = 3;
+    let attempt = 0;
 
-      const searchTerm =
-        this.CATEGORY_MAPPINGS[params.category] || "background music";
+    // Generate alternative search terms for retries
+    const searchTerms = this.getSearchTerms(params.category);
 
-      // Search for tracks using Fetch API
-      const searchResponse = await fetch(
-        `${this.FREESOUND_API_URL}?${new URLSearchParams({
-          query: searchTerm,
-          token: this.config.freeSoundKey,
-          filter: "duration:[60 TO *]",
-          sort: "rating_desc",
-          fields: "id,name,previews,duration,username",
-        })}`
-      );
+    while (attempt < MAX_RETRIES) {
+      try {
+        const searchTerm =
+          searchTerms[attempt] || "background music cinematic instrumental"; // Use the best available term
+        this.logger
+          .terminal()
+          .cyan(
+            `[INFO] 🎵 Searching for: "${searchTerm}" (Attempt ${
+              attempt + 1
+            })\n`
+          );
 
-      if (!searchResponse.ok) {
-        throw new Error(`API request failed: ${searchResponse.status}`);
-      }
-
-      const data = await searchResponse.json();
-      if (!data.results || data.results.length === 0) {
-        throw new Error("No music found for the specified category");
-      }
-
-      const selectedTrack =
-        data.results[Math.floor(Math.random() * data.results.length)];
-      this.logger
-        .terminal()
-        .magenta(
-          `[INFO] 🎶 Audio found! Track: "${selectedTrack.name}" by ${selectedTrack.username}.\n`
-        );
-      const musicId = uuidv4();
-      const rawPath = path.join(
-        this.config.outputDir,
-        `${musicId}_raw.${this.config.outputFormat}`
-      );
-      const outputPath = path.join(
-        this.config.outputDir,
-        `${musicId}.${this.config.outputFormat}`
-      );
-      this.logger
-        .terminal()
-        .cyan(
-          "[INFO] 🎵 Audio is being downloaded from Freesound.org. Please wait...\n"
+        const searchResponse = await fetch(
+          `${this.FREESOUND_API_URL}?${new URLSearchParams({
+            query: searchTerm,
+            token: this.config.freeSoundKey,
+            filter: "duration:[60 TO *]",
+            sort: "rating_desc",
+            fields: "id,name,previews,duration,username",
+          })}`
         );
 
-      // Download the audio file using Fetch
-      const audioResponse = await fetch(
-        selectedTrack.previews["preview-lq-mp3"]
-      );
-      if (!audioResponse.ok) {
-        throw new Error(`Audio download failed: ${audioResponse.status}`);
-      }
+        if (!searchResponse.ok) {
+          throw new Error(`API request failed: ${searchResponse.status}`);
+        }
 
-      await pipeline(audioResponse.body, fs.createWriteStream(rawPath));
-      this.logger
-        .terminal()
-        .yellow(
-          "[INFO] 🎚️ Applying FadeIn and FadeOut effects to the audio...\n"
+        const data = await searchResponse.json();
+        if (!data.results || data.results.length === 0) {
+          throw new Error("No results found");
+        }
+
+        // Select a random track from the results
+        const selectedTrack =
+          data.results[Math.floor(Math.random() * data.results.length)];
+        this.logger
+          .terminal()
+          .magenta(
+            `[INFO] 🎶 Found track: "${selectedTrack.name}" by ${selectedTrack.username}\n`
+          );
+
+        // Generate file paths
+        const musicId = uuidv4();
+        const rawPath = path.join(
+          this.config.outputDir,
+          `${musicId}_raw.${this.config.outputFormat}`
+        );
+        const outputPath = path.join(
+          this.config.outputDir,
+          `${musicId}.${this.config.outputFormat}`
         );
 
-      // Apply fade effects
-      await this.applyFadeEffects(
-        rawPath,
-        outputPath,
-        this.config.fadeInDuration,
-        this.config.fadeOutDuration
-      );
+        // Download the audio
+        const audioResponse = await fetch(
+          selectedTrack.previews["preview-lq-mp3"]
+        );
+        if (!audioResponse.ok) {
+          throw new Error(`Audio download failed: ${audioResponse.status}`);
+        }
+        await pipeline(audioResponse.body, fs.createWriteStream(rawPath));
 
-      // Clean up raw file
-      fs.unlinkSync(rawPath);
+        this.logger
+          .terminal()
+          .yellow("[INFO] 🎚️ Applying FadeIn and FadeOut effects...\n");
 
-      return outputPath;
-    } catch (error) {
-      this.logger.error(`Failed to generate music: ${error.message}`);
-      throw error;
+        // Apply fade effects
+        await this.applyFadeEffects(
+          rawPath,
+          outputPath,
+          this.config.fadeInDuration,
+          this.config.fadeOutDuration
+        );
+
+        // Clean up raw file
+        fs.unlinkSync(rawPath);
+        return outputPath;
+      } catch (error) {
+        this.logger.error(`Attempt ${attempt + 1} failed: ${error.message}`);
+
+        attempt++;
+        if (attempt >= MAX_RETRIES) {
+          throw new Error("Max retries reached. Failed to generate music.");
+        }
+      }
     }
   }
 }

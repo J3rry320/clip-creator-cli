@@ -80,6 +80,7 @@ class VideoGenerator {
     fps: 30,
     outputDir: path.join(process.cwd(), "clip-creator-generated"),
     fontSize: 32,
+    font: path.resolve(__dirname, "../assets/fonts/OpenSans-Regular.ttf"),
   };
 
   /**
@@ -106,7 +107,6 @@ class VideoGenerator {
       const segmentPaths = await Promise.all(
         segments.map((segment) => this.createSegment(segment))
       );
-
       const withTransitions = await this.combineVideosWithTransitions(
         segmentPaths,
         segments
@@ -137,7 +137,6 @@ class VideoGenerator {
   async createSegment(segment) {
     //Not using tmp as it will mess up the cleaning process. Now this.cleanup method works
     const outputPath = path.join(this.tempDir, `segment_${segment.id}.mp4`);
-
     return this.createMediaSegment(segment, outputPath);
   }
 
@@ -194,77 +193,121 @@ class VideoGenerator {
    * @returns {Promise<string>} - Path to the media video segment.
    */
   async createMediaSegment(segment, outputPath) {
-    if (!this.pexelsClient) {
-      throw new Error("Pexels client not initialized");
-    }
-
-    const { videoFile } = await this.findSuitableVideo(segment);
-
-    const response = await fetch(videoFile.link);
-    const tempVideoFile = tmp.fileSync({
-      postfix: ".mp4",
-    });
-
-    const buffer = await response.arrayBuffer();
-
-    fs.writeFileSync(tempVideoFile.name, Buffer.from(buffer));
-
-    return new Promise((resolve, reject) => {
-      const font =
-        path.resolve(this.config.font) ||
-        path.resolve(__dirname, "../assets/fonts/OpenSans-Regular.ttf");
-      if (!font) {
-        this.logger.error(
-          "Couldn't find the font file. Please check your configuration"
-        );
-        reject(new Error("Font file not found"));
-        return;
+    try {
+      if (!this.pexelsClient) {
+        throw new Error("Pexels client not initialized");
       }
-      //Writing to a text file to escape characters in the command line
-      const textFile = tmp.fileSync({ postfix: ".txt" });
-      fs.writeFileSync(textFile.name, segment.text);
-      const calculatedBoxBorderWidth = this.config.height * 0.025;
-      ffmpeg(tempVideoFile.name)
-        .inputOptions(this.ffmpegBaseOptions)
-        .videoFilters([
-          {
-            filter: "drawtext",
-            options: {
-              textfile: textFile.name,
-              fontfile: font,
-              fontsize: this.config.fontSize || 24,
-              fontcolor: "black",
-              box: 1,
-              boxcolor: "white@0.9",
-              boxborderw: calculatedBoxBorderWidth, // Simplified calculation
-              x: "(w-text_w)/2",
-              y: "(h-text_h)/2", // Original vertical centering
-              borderw: 2,
-              bordercolor: "black@0.2",
-              enable: `between(t,0,${segment.duration})`,
-            },
-          },
-        ])
-        .outputOptions([
-          `-t ${segment.duration}`,
-          "-c:v libx264",
-          "-preset medium",
-          "-crf 23",
-        ])
-        .on("end", () => {
-          textFile.removeCallback();
-          tempVideoFile.removeCallback();
-          resolve(outputPath);
-        })
-        .on("error", (err, stdout, stderr) => {
-          this.logger.error(`Segmentation Error: ${err.message}`);
-          this.logger.error(`FFmpeg stderr: ${stderr}`);
-          textFile.removeCallback();
-          tempVideoFile.removeCallback();
-          reject(err);
-        })
-        .save(outputPath);
-    });
+
+      // Fetch video
+      const { videoFile } = await this.findSuitableVideo(segment);
+
+      const response = await fetch(videoFile.link);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to download video. HTTP Status: ${response.status}`
+        );
+      }
+
+      // Create temporary video file
+      const tempVideoFile = tmp.fileSync({
+        postfix: ".mp4",
+        discardDescriptor: true,
+      });
+      if (!tempVideoFile.name) {
+        throw new Error("Failed to create temporary video file");
+      }
+
+      // Write video buffer to file
+      const buffer = await response.arrayBuffer();
+      fs.writeFileSync(tempVideoFile.name, Buffer.from(buffer));
+
+      const maxCharsPerLine = Math.floor(
+        this.config.width / (this.config.fontSize * 0.6)
+      ); // Estimate max chars per line
+
+      let processedText = segment.text;
+
+      if (processedText.length > maxCharsPerLine) {
+        const words = processedText.split(" ");
+        const mid = Math.ceil(words.length / 2);
+        processedText = `${words.slice(0, mid).join(" ")}\n${words
+          .slice(mid)
+          .join(" ")}`;
+      }
+
+      // Create text file
+      const textFile = tmp.fileSync({
+        postfix: ".txt",
+        discardDescriptor: true,
+      });
+      if (!textFile.name) {
+        throw new Error("Failed to create temporary text file");
+      }
+
+      // Write formatted text to file as ffmpeg complains directly passing the text
+      fs.writeFileSync(textFile.name, processedText);
+      return new Promise((resolve, reject) => {
+        try {
+          // Resolve font path
+          const font = path.resolve(this.config.font);
+          if (!font) {
+            throw new Error(
+              "Font file not found. Please check your configuration."
+            );
+          }
+
+          const calculatedBoxBorderWidth = this.config.height * 0.025;
+
+          // Run FFmpeg
+          ffmpeg(tempVideoFile.name)
+            .inputOptions(this.ffmpegBaseOptions)
+            .videoFilters([
+              {
+                filter: "drawtext",
+                options: {
+                  textfile: textFile.name,
+                  fontfile: font,
+                  fontsize: this.config.fontSize || 24,
+                  fontcolor: "black",
+                  box: 1,
+                  boxcolor: "white@0.9",
+                  boxborderw: calculatedBoxBorderWidth,
+                  x: "(w-text_w)/2",
+                  y: "(h-text_h)/2",
+                  borderw: 2,
+                  bordercolor: "black@0.2",
+                  enable: `between(t,0,${segment.duration})`,
+                },
+              },
+            ])
+            .outputOptions([
+              `-t ${segment.duration}`,
+              "-c:v libx264",
+              "-preset medium",
+              "-crf 23",
+            ])
+            .on("end", () => {
+              textFile.removeCallback();
+              tempVideoFile.removeCallback();
+              resolve(outputPath);
+            })
+            .on("error", (err, _, stderr) => {
+              this.logger.error(`Segmentation error: ${err}`);
+              this.logger.error(`Ffmpeg error: ${stderr}`);
+              textFile.removeCallback();
+              tempVideoFile.removeCallback();
+              reject(new Error(`FFmpeg failed: ${err.message}`));
+            })
+            .save(outputPath);
+        } catch (ffmpegError) {
+          console.error("Unexpected FFmpeg error:", ffmpegError);
+          reject(ffmpegError);
+        }
+      });
+    } catch (error) {
+      console.error("createMediaSegment error:", error);
+      throw error;
+    }
   }
 
   /**
@@ -371,8 +414,8 @@ class VideoGenerator {
           .save(outputPath);
       });
     } catch (error) {
-      this.logger.error(`Sync Error: ${err.message}`);
-      reject(err);
+      this.logger.error(`Sync Error: ${error.message}`);
+      reject(error);
     }
   }
 
