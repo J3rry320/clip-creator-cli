@@ -39,7 +39,7 @@ term.on("key", (name) => {
 logger.drawAsciiArt("Clip Creator CLI");
 
 program
-  .name("clip-create")
+  .name("clip-creator")
   .description(
     "A powerful CLI tool for creating engaging video clips with AI-generated audio and scripts. " +
       "Supports multiple content categories, tones, and customizable parameters for perfect content generation."

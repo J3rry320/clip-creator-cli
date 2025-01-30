@@ -171,11 +171,16 @@ class AudioManager {
         const searchResponse = await fetch(
           `${this.FREESOUND_API_URL}?${new URLSearchParams({
             query: searchTerm,
-            token: this.config.freeSoundKey,
+
             filter: "duration:[60 TO *]",
             sort: "rating_desc",
             fields: "id,name,previews,duration,username",
-          })}`
+          })}`,
+          {
+            headers: {
+              Authorization: `Token ${this.config.freeSoundKey}`, // ✅ Correct way to send the token
+            },
+          }
         );
 
         if (!searchResponse.ok) {
@@ -214,6 +219,11 @@ class AudioManager {
         if (!audioResponse.ok) {
           throw new Error(`Audio download failed: ${audioResponse.status}`);
         }
+
+        if (!audioResponse.body) {
+          throw new Error("Audio response body is empty or undefined.");
+        }
+
         await pipeline(audioResponse.body, fs.createWriteStream(rawPath));
 
         this.logger
@@ -233,7 +243,6 @@ class AudioManager {
         return outputPath;
       } catch (error) {
         this.logger.error(`Attempt ${attempt + 1} failed: ${error.message}`);
-
         attempt++;
         if (attempt >= MAX_RETRIES) {
           throw new Error("Max retries reached. Failed to generate music.");

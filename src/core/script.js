@@ -35,14 +35,17 @@ class PromptGenerator {
   /**
    * Creates an instance of PromptGenerator.
    * @param {string} apiKey - API key for the Groq SDK.
+   * @param {groqInstance} - Instance of Groq (For testing purposes).
    * @throws {Error} If the API key is not provided.
    */
-  constructor(apiKey) {
+  constructor(apiKey, groqInstance = null) {
     if (!apiKey) {
       throw new Error("API key is required to use the PromptGenerator");
     }
     this.API_KEY = apiKey;
     this.logger = new Logger();
+    this.groq =
+      groqInstance || new Groq({ apiKey: this.API_KEY, timeout: 30000 });
   }
 
   /**
@@ -234,9 +237,8 @@ class PromptGenerator {
   async generateScript(config, attempt = 0) {
     try {
       this.validateConfig(config);
-      const groq = new Groq({ apiKey: this.API_KEY, timeout: 30000 });
 
-      const completion = await groq.chat.completions.create({
+      const completion = await this.groq.chat.completions.create({
         messages: [
           { role: "system", content: PromptGenerator.SYSTEM_PROMPT },
           { role: "user", content: PromptGenerator.generateUserPrompt(config) },
@@ -256,9 +258,9 @@ class PromptGenerator {
       if (this.shouldRetry(error) && attempt < PromptGenerator.MAX_RETRIES) {
         await this.delay(1000 * (attempt + 1)); // Exponential backoff
         return this.generateScript(config, attempt + 1);
+      } else {
+        throw new Error(PromptGenerator.LLM_ERROR_MESSAGE);
       }
-
-      throw new Error(PromptGenerator.LLM_ERROR_MESSAGE);
     }
   }
 }
