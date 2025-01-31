@@ -1,3 +1,11 @@
+/**
+ * @remarks
+ * This project is open source under the MIT license.
+ * Contributions, improvements, and usage are welcome.
+ *
+ * For professional inquiries or hiring me, please visit [my LinkedIn](https://www.linkedin.com/in/jerrythejsguy/).
+ */
+
 "use strict";
 const { Groq } = require("groq-sdk");
 const Logger = require("../utils/logger");

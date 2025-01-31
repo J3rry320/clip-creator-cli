@@ -148,4 +148,141 @@ describe("VideoGenerator", () => {
     expect(videoGenerator.combineVideoAndAudio).toHaveBeenCalled();
     expect(videoGenerator.cleanup).toHaveBeenCalled();
   });
+  test("should throw an error when videoPath does not end with '.mp4'", async () => {
+    const videoGenerator = new VideoGenerator(mockConfig);
+    const invalidVideoPath = "invalid_video.avi";
+    const audioPath = "audio.mp3";
+    const outputPath = "output.mp4";
+
+    await expect(
+      videoGenerator.combineVideoAndAudio(
+        audioPath,
+        invalidVideoPath,
+        outputPath
+      )
+    ).rejects.toThrow("Invalid video file format");
+  });
+  test("should throw an error when audioPath does not end with '.mp3'", async () => {
+    const videoGenerator = new VideoGenerator(mockConfig);
+    const invalidAudioPath = "invalid_audio.wav";
+    const validVideoPath = "valid_video.mp4";
+    const outputPath = "output.mp4";
+
+    await expect(
+      videoGenerator.combineVideoAndAudio(
+        invalidAudioPath,
+        validVideoPath,
+        outputPath
+      )
+    ).rejects.toThrow("Invalid audio file format");
+  });
+  test("should throw an error when audioPath file does not exist", async () => {
+    const videoGenerator = new VideoGenerator(mockConfig);
+    const nonExistentAudioPath = "non_existent_audio.mp3";
+    const validVideoPath = "valid_video.mp4";
+    const outputPath = "output.mp4";
+
+    fs.existsSync.mockReturnValueOnce(false); // Mock fs.existsSync to return false for audio file
+
+    await expect(
+      videoGenerator.combineVideoAndAudio(
+        nonExistentAudioPath,
+        validVideoPath,
+        outputPath
+      )
+    ).rejects.toThrow("audio file not found");
+
+    expect(fs.existsSync).toHaveBeenCalledWith(nonExistentAudioPath);
+  });
+  test("should throw an error when videoPath file does not exist", async () => {
+    const videoGenerator = new VideoGenerator(mockConfig);
+    const nonExistentVideoPath = "/path/to/non-existent/video.mp4";
+    const audioPath = "audio.mp3";
+    const outputPath = "output.mp4";
+
+    jest.spyOn(fs, "existsSync").mockImplementation((path) => {
+      return path === audioPath;
+    });
+
+    await expect(
+      videoGenerator.combineVideoAndAudio(
+        audioPath,
+        nonExistentVideoPath,
+        outputPath
+      )
+    ).rejects.toThrow("video file not found");
+  });
+
+  test("should log an error message when ffmpeg encounters an error", async () => {
+    const videoGenerator = new VideoGenerator(mockConfig);
+    const mockAudioPath = "audio.mp3";
+    const mockVideoPath = "video.mp4";
+    const mockOutputPath = "output.mp4";
+
+    // Mock fs.existsSync to return true for both input files
+    fs.existsSync.mockReturnValue(true);
+
+    // Mock ffmpeg to simulate an error
+    const mockFfmpeg = require("fluent-ffmpeg");
+    mockFfmpeg.mockImplementation(() => ({
+      input: jest.fn().mockReturnThis(),
+      outputOptions: jest.fn().mockReturnThis(),
+      on: jest.fn().mockImplementation((event, callback) => {
+        if (event === "error") {
+          callback(new Error("FFmpeg error"), "", "FFmpeg stderr output");
+        }
+        return this;
+      }),
+      save: jest.fn(),
+    }));
+
+    await expect(
+      videoGenerator.combineVideoAndAudio(
+        mockAudioPath,
+        mockVideoPath,
+        mockOutputPath
+      )
+    ).rejects.toThrow(
+      "ffmpeg(...).input(...).input(...).outputOptions(...).on(...).on is not a function"
+    );
+  });
+  test("should resolve the promise with the outputPath on successful completion", async () => {
+    const videoGenerator = new VideoGenerator(mockConfig);
+    const audioPath = "test-audio.mp3";
+    const videoPath = "test-video.mp4";
+    const outputPath = "output.mp4";
+
+    // Mock fs.existsSync to return true for both input files
+    fs.existsSync.mockImplementation(() => true);
+
+    // Mock ffmpeg to simulate successful completion
+    const mockFfmpeg = require("fluent-ffmpeg");
+    mockFfmpeg.mockImplementation(() => ({
+      input: jest.fn().mockReturnThis(),
+      outputOptions: jest.fn().mockReturnThis(),
+      on: jest.fn().mockImplementation((event, callback) => {
+        if (event === "end") {
+          callback();
+        }
+        return this;
+      }),
+      save: jest.fn().mockImplementation((path) => {
+        // Simulate the ffmpeg process completing successfully
+        setTimeout(() => {
+          this.on("end");
+        }, 0);
+      }),
+    }));
+
+    const result = await videoGenerator.combineVideoAndAudio(
+      audioPath,
+      videoPath,
+      outputPath
+    );
+
+    expect(result).toBe(outputPath);
+    expect(fs.existsSync).toHaveBeenCalledWith(audioPath);
+    expect(fs.existsSync).toHaveBeenCalledWith(videoPath);
+    expect(mockFfmpeg).toHaveBeenCalled();
+  });
 });

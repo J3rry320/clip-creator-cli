@@ -6,7 +6,7 @@ const { pipeline } = require("stream/promises"); // ✅ Import pipeline
 const { Readable } = require("stream");
 const ffmpeg = require("fluent-ffmpeg");
 const secrets = require("../secrets/config");
-
+//TODO Why do we need to pass the timeout? Something is wrong
 jest.mock("@ffmpeg-installer/ffmpeg", () => ({
   path: "/opt/homebrew/bin/ffmpeg",
 }));

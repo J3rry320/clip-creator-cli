@@ -1,3 +1,10 @@
+/**
+ * @remarks
+ * This project is open source under the MIT license.
+ * Contributions, improvements, and usage are welcome.
+ *
+ * For professional inquiries or hiring me, please visit [my LinkedIn](https://www.linkedin.com/in/jerrythejsguy/).
+ */
 const express = require("express");
 const cors = require("cors");
 const { spawn } = require("child_process");
@@ -26,7 +33,7 @@ app.get("/api/create-video", (req, res) => {
   if (config.topic) args.push("--topic", `"${config.topic}"`);
   if (config.duration) args.push("--duration", config.duration);
   if (config.keyTerms && Array.isArray(config.keyTerms)) {
-    args.push("--keyTerms", config.keyTerms.join(","));
+    args.push("--keyTerms", `"${config.keyTerms.join(",")}"`);
   }
   if (config.requireFactChecking) args.push("--requireFactChecking");
   if (config.outputDir) args.push("--outputDir", config.outputDir);
@@ -229,7 +236,6 @@ function getResponseFromCLI(command, res) {
     res.status(500).json({ error: "Failed to start CLI process" });
   });
 }
-
 
 const initializeServer = (port) => {
   app.listen(port || 3003);

@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/**
+ * @remarks
+ * This project is open source under the MIT license. 
+ * Contributions, improvements, and usage are welcome.
+ * 
+ * For professional inquiries or hiring me, please visit [my LinkedIn](https://www.linkedin.com/in/jerrythejsguy/).
+ */
 
 const { Command } = require("commander");
 const term = require("terminal-kit").terminal;

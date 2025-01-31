@@ -1,3 +1,10 @@
+/**
+ * @remarks
+ * This project is open source under the MIT license.
+ * Contributions, improvements, and usage are welcome.
+ *
+ * For professional inquiries or hiring me, please visit [my LinkedIn](https://www.linkedin.com/in/jerrythejsguy/).
+ */
 const { AudioManager } = require("./core/audio.js");
 const { PromptGenerator } = require("./core/script.js");
 const { VideoGenerator } = require("./core/video.js");
@@ -38,6 +45,11 @@ const createVideo = async (config) => {
     fadeInDuration,
     fadeOutDuration,
     requireFactChecking,
+    width,
+    height,
+    fps,
+    font,
+    fontSize,
   } = config;
 
   if (!groqKey || !pexelsKey || !freeSoundKey) {
@@ -61,7 +73,15 @@ const createVideo = async (config) => {
   );
   //TODO Get the remaining optional configuration from CLI
   const videoGenerator = new VideoGenerator(
-    getNoiseLessConfig({ outputDir, pexelsKey })
+    getNoiseLessConfig({
+      outputDir,
+      pexelsKey,
+      width,
+      height,
+      font,
+      fontSize,
+      fps,
+    })
   );
   let generatedScriptSegments, generatedMusicPath, generatedVideoPath;
   await logger.runWithLoader(

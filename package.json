@@ -20,13 +20,29 @@
   "keywords": [
     "CLI",
     "video-generation",
+    "video",
+    "AI Generator",
     "AI",
     "automation",
-    "content-creation"
+    "content-creation",
+    "video-editing",
+    "open-source",
+    "FFmpeg",
+    "Pexels",
+    "FreeSound",
+    "GROQ"
   ],
   "author": "Jerry Satpathy <rutuparna.satpathy01@gmail.com>",
   "license": "MIT",
-  "description": "A CLI tool for generating AI-powered video clips using FreeSound, GROQ, and Pexels.",
+  "description": "An open-source CLI tool for generating AI-powered video clips using FreeSound, GROQ, and Pexels. Create engaging content effortlessly with customizable features and high-quality assets.",
+  "homepage": "https://github.com/j3rry320/clip-creator-cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/j3rry320/clip-creator-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/j3rry320/clip-creator-cli/issues"
+  },
   "files": [
     "dist",
     "README.md",

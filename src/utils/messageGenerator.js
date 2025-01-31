@@ -1,3 +1,15 @@
+/**
+ * @remarks
+ * This project is open source under the MIT license.
+ * Contributions, improvements, and usage are welcome.
+ *
+ * For professional inquiries or hiring me, please visit [my LinkedIn](https://www.linkedin.com/in/jerrythejsguy/).
+ */
+/**
+ * A method to return a verbose description of the category
+ * @param {string} category
+ * @returns {string} The category description
+ */
 function getCategoryDescription(category) {
   const descriptions = {
     "Science & Technology":
@@ -31,6 +43,11 @@ function getCategoryDescription(category) {
   };
   return descriptions[category] || category;
 }
+/**
+ * A method to return a verbose description of the tone
+ * @param {string} tone
+ * @returns {string} The tone description
+ */
 
 function getToneDescription(tone) {
   const descriptions = {
