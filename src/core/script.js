@@ -177,12 +177,6 @@ class PromptGenerator {
     if (missing.length > 0) {
       throw new Error(`Missing required fields: ${missing.join(", ")}`);
     }
-
-    if (config.duration % PromptGenerator.SEGMENT_DURATION !== 0) {
-      throw new Error(
-        `Duration must be divisible by ${PromptGenerator.SEGMENT_DURATION}`
-      );
-    }
   }
 
   /**

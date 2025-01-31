@@ -219,7 +219,11 @@ class AudioManager {
           this.config.outputDir,
           `${musicId}.${this.config.outputFormat}`
         );
-
+this.logger
+  .terminal()
+  .brightBlue(
+    `🎵 Downloading "${selectedTrack.name}" by ${selectedTrack.username}. Please wait...`
+  );
         // Download the audio
         const audioResponse = await fetch(
           selectedTrack.previews["preview-lq-mp3"]

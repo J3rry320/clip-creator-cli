@@ -268,11 +268,11 @@ You can configure these options for a more refined output (not required by defau
   - Example Usage: `--fps 30`
 
 - **--height**
-  - Description: Specifies the height of the video in pixels.
+  - Description: Specifies the height of the video in pixels. Also used to search Pexels. Use traditional values to avoid search failures.
   - Example Usage: `--height 1080`
 
 - **--width**
-  - Description: Specifies the width of the video in pixels.
+  - Description: Specifies the width of the video in pixels. Also used to search Pexels. Use traditional values to avoid search failures.
   - Example Usage: `--width 1920`
 
 - **--volume**

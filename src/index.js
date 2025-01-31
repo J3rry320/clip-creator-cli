@@ -71,7 +71,6 @@ const createVideo = async (config) => {
       outputDir,
     })
   );
-  //TODO Get the remaining optional configuration from CLI
   const videoGenerator = new VideoGenerator(
     getNoiseLessConfig({
       outputDir,
@@ -98,7 +97,7 @@ const createVideo = async (config) => {
       );
     },
     "Script Generation",
-    5000
+    10000
   );
   await logger.runWithLoader(
     async () => {
@@ -107,7 +106,7 @@ const createVideo = async (config) => {
       });
     },
     "Audio Generation",
-    25000
+    40000
   );
   await logger.runWithLoader(
     async () => {
@@ -123,7 +122,7 @@ const createVideo = async (config) => {
       );
     },
     "Video Generation",
-    50000
+    100000
   );
 
   return generatedVideoPath;

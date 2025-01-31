@@ -43,13 +43,6 @@ describe("PromptGenerator Test Suite", () => {
     );
   });
 
-  test("validateConfig throws error for invalid duration", () => {
-    const config = { duration: 23, category: "education", tone: "informative" };
-    expect(() => promptGenerator.validateConfig(config)).toThrow(
-      "Duration must be divisible by 5"
-    );
-  });
-
   test("validateConfig passes with valid config", () => {
     const config = { duration: 30, category: "education", tone: "informative" };
     expect(() => promptGenerator.validateConfig(config)).not.toThrow();

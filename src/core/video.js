@@ -152,50 +152,60 @@ class VideoGenerator {
   }
 
   async findSuitableVideo(segment) {
-    const searchQueries = [
-      segment.description,
-      segment.text,
-      "background",
-      "nature",
-      "landscape",
-      "abstract",
-      "minimalist",
-    ];
+    try {
+      const searchQueries = [
+        segment.description,
+        segment.text,
+        "background",
+        "nature",
+        "landscape",
+        "abstract",
+        "minimalist",
+      ];
 
-    const searchOptions = {
-      orientation: "portrait",
-      size: "medium",
-      per_page: 5,
-    };
+      const searchOptions = {
+        size: "medium",
+        per_page: 5,
 
-    for (const query of searchQueries) {
-      try {
-        const searchResults = await this.pexelsClient.videos.search({
-          query,
-          ...searchOptions,
-        });
+        orientation:
+          this.config.width >= this.config.height ? "landscape" : "portrait",
+      };
 
-        if (searchResults.videos && searchResults.videos.length > 0) {
-          const videoFile = searchResults.videos[0].video_files.find(
-            (file) => file.quality === "hd" && file.width === this.config.width
-          );
+      for (const query of searchQueries) {
+        try {
+          const searchResults = await this.pexelsClient.videos.search({
+            query,
+            ...searchOptions,
+          });
 
-          if (videoFile) {
-            return {
-              videoFile,
-              query: query,
-            };
+          if (searchResults.videos && searchResults.videos.length > 0) {
+            const videoFile = searchResults.videos[0].video_files.find(
+              (file) => file.quality === "hd"
+              // file.width === this.config.width &&
+              // file.height === this.config.height
+            );
+
+            if (videoFile) {
+              return {
+                videoFile,
+                query: query,
+              };
+            }
           }
+        } catch (error) {
+          this.logger.error(
+            `Search failed for query '${query}': ${error.message}`
+          );
         }
-      } catch (error) {
-        this.logger.warn(
-          `Search failed for query '${query}': ${error.message}`
-        );
       }
+    } catch (error) {
+      this.logger.error(`Error while searching for query '${query}': ${error}`);
+      throw new Error(
+        "No suitable media found after multiple searches. Please try again with different parameters."
+      );
     }
-
-    throw new Error("No suitable media found after multiple search attempts");
   }
+  
   /**
    * Creates a media-based video segment.
    *
