@@ -120,7 +120,7 @@ npx clip-creator [command]
 
 For development:
 ```bash
-git clone https://github.com/j3rry320/clip-creator
+git clone https://github.com/j3rry320/clip-creator-cli
 cd clip-creator
 npm install
 node clip-creator bin/cli.js
