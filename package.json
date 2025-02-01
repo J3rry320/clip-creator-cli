@@ -1,7 +1,7 @@
 {
-  "name": "clip-create",
+  "name": "clip-creator",
   "description": "An open-source CLI tool for generating AI-powered video clips using FreeSound, GROQ, and Pexels. Create engaging content effortlessly with customizable features and high-quality assets.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "./dist/cli.js",
   "source": "./bin/cli.js",
   "bin": {
