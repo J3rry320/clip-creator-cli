@@ -165,19 +165,21 @@ class VideoGenerator {
 
       const searchOptions = {
         size: "medium",
-        per_page: 5,
+        //For more choices and to avoid rate limits
+
+        per_page: 15,
 
         orientation:
           this.config.width >= this.config.height ? "landscape" : "portrait",
       };
-
+      //TODO: Implement cache with redis to avoid monthly API quotas
       for (const query of searchQueries) {
         try {
           const searchResults = await this.pexelsClient.videos.search({
             query,
             ...searchOptions,
           });
-
+          //TODO Refine the logic here
           if (searchResults.videos && searchResults.videos.length > 0) {
             const videoFile = searchResults.videos[0].video_files.find(
               (file) => file.quality === "hd"

@@ -203,7 +203,7 @@ You can create a JSON configuration file to store API keys, default settings or 
   "factChecking": true,
   "outputDir": "./videos",
   "fontSize": 24,
-  "font": "Arial",
+  "font": "/path/to/fontfile.ttf",
   "fps": 30,
   "height": 1080,
   "width": 1920,
@@ -220,85 +220,264 @@ clip-creator create --config path/to/config.json
 > Don't worry, Whatever key you don't provide in the config file will be asked again in the interactive prompt
 
 ## Default Options
-**These fields are required**
-You need to provide these configurations for the tool to function properly:
+
+**These fields are required** You need to provide these configurations for the tool to function properly:
 
 ### --freeSoundApiKey
-- **Description:** Specifies your API key for accessing FreeSound. This key allows you to integrate high-quality audio tracks into your video projects.
-- **Example Usage:** `"freeSoundApiKey": "your-key"`
+
+-   **Description:** Specifies your API key for accessing FreeSound. This key allows you to integrate high-quality audio tracks into your video projects.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--freeSoundKey "your-key"`
+        
+    -   JSON: `"freeSoundApiKey": "your-key"`
+        
 
 ### --groqApiKey
-- **Description:** Specifies your API key for accessing GROQ. This key is used for AI-powered script generation to create engaging video content.
-- **Example Usage:** `"groqApiKey": "your-key"`
+
+-   **Description:** Specifies your API key for accessing GROQ. This key is used for AI-powered script generation to create engaging video content.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--groqKey "your-key"`
+        
+    -   JSON: `"groqApiKey": "your-key"`
+        
 
 ### --pexelsApiKey
-- **Description:** Specifies your API key for accessing Pexels. This key provides access to high-definition visuals to enhance your videos.
-- **Example Usage:** `"pexelsApiKey": "your-key"`
+
+-   **Description:** Specifies your API key for accessing Pexels. This key provides access to high-definition visuals to enhance your videos.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--pexelsKey "your-key"`
+        
+    -   JSON: `"pexelsApiKey": "your-key"`
+        
 
 ### --category
-- **Description:** Defines the content category for the video. This option helps tailor the video to specific subject areas or themes.
-- **Example Usage:** `"category": "Educational"`
+
+-   **Description:** Defines the content category for the video. This option helps tailor the video to specific subject areas or themes.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--category "Educational"`
+        
+    -   JSON: `"category": "Educational"`
+        
 
 ### --tone
-- **Description:** Specifies the tone of the video. This option allows you to set the overall style and mood of the content.
-- **Example Usage:** `"tone": "Professional"`
+
+-   **Description:** Specifies the tone of the video. This option allows you to set the overall style and mood of the content.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--tone "Professional"`
+        
+    -   JSON: `"tone": "Professional"`
+        
 
 ### --topic
-- **Description:** Defines the main topic of the video. This option guides the content creation process to focus on the specified subject.
-- **Example Usage:** `"topic": "Rise of AI"`
+
+-   **Description:** Defines the main topic of the video. This option guides the content creation process to focus on the specified subject.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--topic "Rise of AI"`
+        
+    -   JSON: `"topic": "Rise of AI"`
+        
 
 ### --duration
-- **Description:** Sets the duration of the video in seconds. This option allows you to control the length of the final output.
-- **Example Usage:** `"duration": 30`
+
+-   **Description:** Sets the duration of the video in seconds. This option allows you to control the length of the final output.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--duration 30`
+        
+    -   JSON: `"duration": 30`
+        
 
 ## Advanced Options
-**These fields are optional**
-You can configure these options for a more refined output (not required by default) 
 
-- **--keyTerms**
-  - Description: Specifies the key terms that must be included in the generated content.
-  - Example Usage: `--keyTerms "environment, sustainability"`
+**These fields are optional** You can configure these options for a more refined output (not required by default)
 
-- **--requireFactChecking**
-  - Description: Enables fact-checking to ensure that the content is accurate and reliable.
-  - Example Usage: `--requireFactChecking true`
+### --keyTerms
 
-- **--outputDir**
-  - Description: Specifies the custom directory where the output files will be saved.
-  - Example Usage: `--outputDir "/path/to/directory"`
+-   **Description:** Specifies the key terms that must be included in the generated content.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--keyTerms "environment, sustainability"`
+        
+    -   JSON: `"keyTerms": "environment, sustainability"`
+        
 
-- **--fontSize**
-  - Description: Sets the text size in the generated video.
-  - Example Usage: `--fontSize 24`
+### --requireFactChecking
 
-- **--font**
-  - Description: Specifies the custom font file to be used for text in the video.
-  - Example Usage: `--font "/path/to/font.ttf"`
+-   **Description:** Enables fact-checking to ensure that the content is accurate and reliable.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--requireFactChecking true`
+        
+    -   JSON: `"requireFactChecking": true`
+        
 
-- **--fps**
-  - Description: Sets the frames per second for the video.
-  - Example Usage: `--fps 30`
+### --outputDir
 
-- **--height**
-  - Description: Specifies the height of the video in pixels. Also used to search Pexels. Use traditional values to avoid search failures.
-  - Example Usage: `--height 1080`
+-   **Description:** Specifies the custom directory where the output files will be saved.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--outputDir "/path/to/directory/fontfile.ttf"`
+        
+    -   JSON: `"outputDir": "/path/to/directory/fontfile.ttf"`
+        
 
-- **--width**
-  - Description: Specifies the width of the video in pixels. Also used to search Pexels. Use traditional values to avoid search failures.
-  - Example Usage: `--width 1920`
+### --fontSize
 
-- **--volume**
-  - Description: Adjusts the audio volume of the video.
-  - Example Usage: `--volume 75`
+-   **Description:** Sets the text size in the generated video.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--fontSize 24`
+        
+    -   JSON: `"fontSize": 24`
+        
 
-- **--fadeInDuration**
-  - Description: Sets the duration for the fade-in effect at the beginning of the video, in seconds.
-  - Example Usage: `--fadeInDuration 2`
+### --font
 
-- **--fadeOutDuration**
-  - Description: Sets the duration for the fade-out effect at the end of the video, in seconds.
-  - Example Usage: `--fadeOutDuration 2`
+-   **Description:** Specifies the custom font file to be used for text in the video.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--font "/path/to/font.ttf"`
+        
+    -   JSON: `"font": "/path/to/font.ttf"`
+        
 
+### --fps
+
+-   **Description:** Sets the frames per second for the video. Range (0-60)
+    
+-   **Example Usage:**
+    
+    -   CLI: `--fps 30`
+        
+    -   JSON: `"fps": 30`
+        
+
+### --height
+
+-   **Description:** Specifies the height of the video in pixels. Also used to search Pexels. Use traditional values to avoid search failures.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--height 1080`
+        
+    -   JSON: `"height": 1080"`
+        
+
+### --width
+
+-   **Description:** Specifies the width of the video in pixels. Also used to search Pexels. Use traditional values to avoid search failures.
+    
+-   **Example Usage:**
+    
+    -   CLI: `--width 1920`
+        
+    -   JSON: `"width": 1920"`
+        
+
+### --volume
+
+-   **Description:** Adjusts the audio volume of the video. Range (0-1) 
+    
+-   **Example Usage:**
+    
+    -   CLI: `--volume 0.75`
+        
+    -   JSON: `"volume": 0.75`
+        
+
+### --fadeInDuration
+
+-   **Description:** Sets the duration for the fade-in effect at the beginning of the video, in seconds. Range (0-5)
+    
+-   **Example Usage:**
+    
+    -   CLI: `--fadeInDuration 2`
+        
+    -   JSON: `"fadeInDuration": 2`
+        
+
+### --fadeOutDuration
+
+-   **Description:** Sets the duration for the fade-out effect at the end of the video, in seconds. Range (0-5)
+    
+-   **Example Usage:**
+    
+    -   CLI: `--fadeOutDuration 2`
+        
+    -   JSON: `"fadeOutDuration": 2`
+
+## Usage Limits
+
+To ensure smooth and uninterrupted usage of the Clip-Creator CLI, please be aware of the following rate limits and how they may affect your video creation capabilities:
+
+-   **Pexels API**
+    
+    -   **Rate Limit:** 20,000 requests per month
+        
+    -   **Usage:** Each video creation consumes 1-2 requests.
+        
+    -   **Videos Per Month:**
+        
+        -   Minimum: 10,000 videos
+            
+        -   Maximum: 20,000 videos
+            
+        -   Average: $10,000+20,0002=15,000\frac{10,000 + 20,000}{2} = 15,000$ videos
+            
+-   **FreeSound API**
+    
+    -   **Rate Limit:** 2000 requests per day
+        
+    -   **Usage:** Each video creation consumes 1-2 requests.
+        
+    -   **Videos Per Month:**
+        
+        -   Minimum: 30,000 videos
+            
+        -   Maximum: 60,000 videos
+            
+        -   Average: $30,000+60,0002=45,000\frac{30,000 + 60,000}{2} = 45,000$ videos
+            
+-   **GROQ API**
+    
+    -   **Rate Limit:** 500,000 tokens per day
+        
+    -   **Usage:** Each video creation consumes up to 1000-1200 tokens.
+        
+    -   **Videos Per Month:**
+        
+        -   Minimum: 12,500 videos
+            
+        -   Maximum: 15,000 videos
+            
+        -   Average: $12,500+15,0002=13,750\frac{12,500 + 15,000}{2} = 13,750$ videos
+            
+
+### Overall Video Creation Capacity
+$\frac{15,000 + 45,000 + 13,750}{3} = \frac{73,750}{3} \approx 24,583 \text{ videos}$
+
+By  taking into account the average of usage limits of each service , you can create approximately **24,583 videos per month** on average. This estimate assumes balanced usage across all APIs and adherence to their respective rate limits and request limits. 
+
+> Note: The actual number of videos you can create per month will depend on the specific combination of APIs used and respecting the rate limits of each service including the total requests sent per minute (which I haven't taken into consideration) 
+  
 ## Roadmap
 
 
