@@ -1,5 +1,6 @@
 {
   "name": "clip-create",
+  "description": "An open-source CLI tool for generating AI-powered video clips using FreeSound, GROQ, and Pexels. Create engaging content effortlessly with customizable features and high-quality assets.",
   "version": "1.0.0",
   "main": "./dist/cli.js",
   "source": "./bin/cli.js",
@@ -9,7 +10,6 @@
   "directories": {
     "test": "tests"
   },
-  "module": "./dist/index.mjs",
   "scripts": {
     "build": "rm -rf dist/ && webpack --config webpack.config.js",
     "start": "node dist/cli.js",
@@ -30,11 +30,27 @@
     "FFmpeg",
     "Pexels",
     "FreeSound",
-    "GROQ"
+    "GROQ",
+    "media",
+    "multimedia",
+    "script generation",
+    "machine learning",
+    "deep learning",
+    "video production",
+    "audio integration",
+    "visuals",
+    "HD video",
+    "API integration",
+    "creative tools",
+    "digital content",
+    "video tools",
+    "API keys",
+    "high-definition",
+    "AI-powered",
+    "video scripts"
   ],
   "author": "Jerry Satpathy <rutuparna.satpathy01@gmail.com>",
   "license": "MIT",
-  "description": "An open-source CLI tool for generating AI-powered video clips using FreeSound, GROQ, and Pexels. Create engaging content effortlessly with customizable features and high-quality assets.",
   "homepage": "https://github.com/j3rry320/clip-creator-cli",
   "repository": {
     "type": "git",
