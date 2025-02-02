@@ -6,11 +6,11 @@ A powerful command-line interface tool for creating engaging video clips with AI
 
 ![npm](https://img.shields.io/npm/v/clip-creator)  ![npm bundle size](https://img.shields.io/bundlephobia/min/clip-creator)
 ![downloads](https://img.shields.io/npm/dt/clip-creator?color=green&label=downloads&logo=npm)
-  ![stars](https://img.shields.io/github/stars/J3rry320/clip-creator?color=brightgreen&label=stars&logo=github)
+  ![stars](https://img.shields.io/github/stars/J3rry320/clip-creator-cli?color=brightgreen&label=stars&logo=github)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Code Coverage](https://img.shields.io/badge/Coverage-53.45%25-yellow)
-![Contributors](https://img.shields.io/github/contributors/J3rry320/clip-creator) 
-![GitHub issues](https://img.shields.io/github/issues/J3rry320/clip-creator)  
+![Contributors](https://img.shields.io/github/contributors/J3rry320/clip-creator-cli) 
+![GitHub issues](https://img.shields.io/github/issues/J3rry320/clip-creator-cli)  
 
 > **Note**: This project is currently a Proof of Concept (POC) and is actively being developed. Expect more features and improvements in future releases.
 
