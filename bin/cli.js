@@ -18,8 +18,8 @@ const {
   getToneDescription,
 } = require("../src/utils/messageGenerator");
 const { createVideo } = require("../src/");
-const { getNoiseLessConfig } = require("../src/utils");
-require("dotenv").config();
+const { getNoiseLessConfig, copyCommandOptions } = require("../src/utils");
+const SimpleBatchProcessor = require("../src/utils/batchProcessor");
 
 const logger = new Logger();
 
@@ -52,7 +52,7 @@ program
       "Supports multiple content categories, tones, and customizable parameters for perfect content generation."
   )
   .version("1.0.0");
-
+// Command to create videos
 program
   .command("create")
   .description("Create a new video clip with customizable parameters")
@@ -138,7 +138,7 @@ program
       process.exit(1);
     }
   });
-
+//Command to print the categories
 program
   .command("list-categories")
   .option("-v, --verbose", "Display available content tones with descriptions")
@@ -152,7 +152,7 @@ program
     });
     process.exit(0);
   });
-
+//Command to print tones
 program
   .command("list-tones")
   .option("-v, --verbose", "Display available content tones with descriptions")
@@ -165,6 +165,7 @@ program
     });
     process.exit(0);
   });
+//Command to run the web interface
 program
   .command("web")
   .description("Start web interface")
@@ -180,6 +181,74 @@ program
       process.exit(1);
     }
   });
+const createCommand = program.commands.find((cmd) => cmd.name() === "create");
+
+// Command to create multiple videos from a single command
+const batchCommand = program
+  .command("batch-process")
+  .description(
+    "Create multiple video clips in parallel from the same configuration"
+  )
+  .option("--count <number>", "Number of videos to generate", parseInt)
+  .option(
+    "--maxConcurrent <number>",
+    "Maximum number of concurrent processes (defaults to CPU cores - 1)",
+    parseInt
+  )
+  .option(
+    "--printStatus",
+    "Print the current status of the videos being processed."
+  );
+copyCommandOptions(createCommand, batchCommand);
+batchCommand.action(async (options) => {
+  let statusInterval;
+  try {
+    const config = await loadConfig(options.config);
+
+    const finalConfig = await getConfiguration(options, config);
+    await validateCoreConfig(finalConfig);
+
+    const batchProcessor = new SimpleBatchProcessor({
+      maxConcurrent: options.maxConcurrent,
+    });
+    if (options.printStatus) {
+      statusInterval = setInterval(() => {
+        batchProcessor.getStatus();
+      }, 5000);
+    }
+
+    // Handle progress updates
+    batchProcessor.on("progress", ({ taskId, status }) => {
+      STYLES.success(`Task ${taskId}: ${status}`);
+    });
+
+    // Handle errors
+    batchProcessor.on("error", ({ taskId, error }) => {
+      STYLES.error(`Task ${taskId} failed: ${error}`);
+    });
+
+    STYLES.highlight(`\nStarting batch process for ${options.count} videos...`);
+
+    const result = await batchProcessor.process(finalConfig, options.count);
+
+    STYLES.success(`\nBatch processing complete!`);
+    STYLES.highlight(`\nSuccessfully created: ${result.results.length} videos`);
+
+    if (result.errors.length > 0) {
+      STYLES.error(`Failed: ${result.errors.length} videos`);
+    }
+    if (options.printStatus) {
+      clearInterval(statusInterval);
+    }
+    process.exit(0);
+  } catch (error) {
+    STYLES.error(`\n⚠️  Error: ${error.message}\n`);
+    if (options.printStatus) {
+      clearInterval(statusInterval);
+    }
+    process.exit(1);
+  }
+});
 program.parse(process.argv);
 
 process.on("exit", () => {
@@ -205,7 +274,25 @@ async function loadConfig(configPath) {
 }
 
 function validateConfigStructure(config) {
-  const validKeys = ["freeSoundApiKey", "groqApiKey", "pexelsApiKey"];
+  const validKeys = [
+    "freeSoundApiKey",
+    "groqApiKey",
+    "pexelsApiKey",
+    "category",
+    "tone",
+    "topic",
+    "duration",
+    "factChecking",
+    "outputDir",
+    "fontSize",
+    "font",
+    "fps",
+    "height",
+    "width",
+    "volume",
+    "fadeInDuration",
+    "fadeOutDuration",
+  ];
   const invalidKeys = Object.keys(config).filter(
     (key) => !validKeys.includes(key)
   );
@@ -258,7 +345,7 @@ async function getConfiguration(cliOptions, fileConfig) {
     // Optional parameters
     keyTerms: cliOptions.keyTerms ?? fileConfig.keyTerms,
     requireFactChecking:
-      cliOptions.requireFactChecking ?? fileConfig.requireFactChecking,
+      cliOptions.requireFactChecking ?? fileConfig.factChecking,
     outputDir: cliOptions.outputDir ?? fileConfig.outputDir,
     volume: cliOptions.volume ?? fileConfig.volume,
     fadeInDuration: cliOptions.fadeInDuration ?? fileConfig.fadeInDuration,

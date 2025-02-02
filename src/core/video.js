@@ -27,6 +27,7 @@ const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const Logger = require("../utils/logger");
 const tmp = require("tmp");
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -147,7 +148,7 @@ class VideoGenerator {
    */
   async createSegment(segment) {
     //Not using tmp as it will mess up the cleaning process. Now this.cleanup method works
-    const outputPath = path.join(this.tempDir, `segment_${segment.id}.mp4`);
+    const outputPath = path.join(this.tempDir, `segment_${uuidv4()}.mp4`);
     return this.createMediaSegment(segment, outputPath);
   }
 
@@ -207,7 +208,7 @@ class VideoGenerator {
       );
     }
   }
-  
+
   /**
    * Creates a media-based video segment.
    *

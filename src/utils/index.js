@@ -5,6 +5,9 @@
  *
  * For professional inquiries or hiring me, please visit [my LinkedIn](https://www.linkedin.com/in/jerrythejsguy/).
  */
+
+const { Command } = require("commander");
+
 /**
  * A method to clean objects of udnefined and null properties
  * @param {Object} config
@@ -16,4 +19,16 @@ const getNoiseLessConfig = (config) =>
       ([, value]) => value !== undefined && value !== null
     )
   );
-module.exports = { getNoiseLessConfig };
+/**
+ *
+ * @param {Command} sourceCommand The source command to copy the options from
+ * @param {Command} targetCommand The target command to copy the options to
+ * @returns {Command} The target command to add actions and other options
+ */
+const copyCommandOptions = (sourceCommand, targetCommand) => {
+  sourceCommand.options.forEach((option) => {
+    targetCommand.option(option.flags, option.description, option.defaultValue);
+  });
+  return targetCommand;
+};
+module.exports = { getNoiseLessConfig, copyCommandOptions };

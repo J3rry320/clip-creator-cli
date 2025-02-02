@@ -8,7 +8,7 @@ A powerful command-line interface tool for creating engaging video clips with AI
 ![downloads](https://img.shields.io/npm/dt/clip-creator?color=green&label=downloads&logo=npm)
   ![stars](https://img.shields.io/github/stars/J3rry320/clip-creator-cli?color=brightgreen&label=stars&logo=github)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-![Code Coverage](https://img.shields.io/badge/Coverage-53.45%25-yellow)
+![Code Coverage](https://img.shields.io/badge/Coverage-60.85%25-yellow)
 ![Contributors](https://img.shields.io/github/contributors/J3rry320/clip-creator-cli) 
 ![GitHub issues](https://img.shields.io/github/issues/J3rry320/clip-creator-cli)  
 
@@ -32,9 +32,10 @@ Create amazing videos effortlessly with just a few inputs! Leveraging the power 
 -   **Fact-Checking Support**: Maintain credibility and accuracy with built-in fact-checking support. Ensure that your content is reliable and trustworthy.
     
 -   **User-Friendly Web Interface**: Enjoy a seamless user experience with our intuitive web interface. Easily navigate through the creation process and make adjustments on the fly.
-    
 
-With Clip Creator CLI, you can effortlessly produce professional-quality videos that captivate your audience and elevate your social media presence. Let AI handle the heavy lifting while you focus on creating impactful content.
+- **Supports Single and Batch Processing of Videos**:  Whether you're creating a single video or generating multiple videos from the same input, our system ensures smooth and timely processing. Perfect for creators and businesses needing to produce multiple videos seamlessly and efficiently.    
+
+**With Clip Creator CLI, you can effortlessly produce professional-quality videos that captivate your audience and elevate your social media presence. Let AI handle the heavy lifting while you focus on creating impactful content.**
 
 ## Prerequisites
 Before using Clip Creator CLI, ensure you have the following:
@@ -183,6 +184,25 @@ clip-creator web --port 3003
 ```
 After running the above command, open your browser and navigate to http://localhost:3003/index.html to access the clean and user-friendly web-based UI. Enjoy a seamless experience in creating and managing your video clips through an intuitive interface.
 
+## `batch-process`
+
+Create multiple video clips in parallel using the same configuration settings.
+
+#### Usage
+
+```bash
+clip-creator batch-process --count 10 --maxConcurrent 4 --topic "Optical Character Recognition" --duration 20 --config /path/to/config.json
+```
+
+#### Options
+
+-   `--count <number>`: Number of videos to generate
+    
+-   `--maxConcurrent <number>`: Maximum number of concurrent processes (defaults to CPU cores - 1)
+    
+-   `--printStatus`: Print the current status of the videos being processed
+    
+-   Any options available in `create` can also be passed to `batch-process`. (You Need to pass the required config to batch-process command as well)
 
 
 ## Configuration  
@@ -482,7 +502,7 @@ By  taking into account the average of usage limits of each service , you can cr
 
 
 ### Short-term Goals (Q1 2025)
--   [ ] Implement batch processing
+-   [X] Implement batch processing
 
 -   [ ] Add more fonts and implement multiple text transformation
 
@@ -604,4 +624,6 @@ If you encounter any issues or have questions, please:
 - Thanks to FreeSound for audio content
 - Thanks to Pexels for video content
 
- > **Subnote**: Due to time commitments elsewhere, there is currently limited test case coverage (53%). However, I am actively working on writing more test cases to achieve up to 99% coverage.
+ > **Subnote**: Due to time commitments elsewhere, there is currently limited test case coverage (60.85%). However, I am actively working on writing more test cases to achieve up to 99% coverage.
+
+ <a href="https://www.producthunt.com/posts/clip-creator-cli?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-clip&#0045;creator&#0045;cli" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=840186&theme=dark&t=1738479822217" alt="Clip&#0045;Creator&#0032;CLI - Automate&#0032;your&#0032;video&#0032;creation&#0032;effortlessly&#0033; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>

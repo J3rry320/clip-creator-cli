@@ -13,6 +13,8 @@ const Logger = require("../utils/logger");
 const app = express();
 const logger = new Logger();
 const fs = require("fs");
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
