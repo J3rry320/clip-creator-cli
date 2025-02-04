@@ -446,58 +446,55 @@ clip-creator create --config path/to/config.json
 
 ## Usage Limits
 
-To ensure smooth and uninterrupted usage of the Clip-Creator CLI, please be aware of the following rate limits and how they may affect your video creation capabilities:
+This document outlines the usage limits for the Clip-Creator CLI, based on the rate limits of the underlying APIs it utilizes.  Understanding these limits is crucial for planning your video creation workflow.
 
--   **Pexels API**
-    
-    -   **Rate Limit:** 20,000 requests per month
-        
-    -   **Usage:** Each video creation consumes 1-2 requests.
-        
-    -   **Videos Per Month:**
-        
-        -   Minimum: 10,000 videos
-            
-        -   Maximum: 20,000 videos
-            
-        -   Average: $10,000+20,0002=15,000\frac{10,000 + 20,000}{2} = 15,000$ videos
-            
--   **FreeSound API**
-    
-    -   **Rate Limit:** 2000 requests per day
-        
-    -   **Usage:** Each video creation consumes 1-2 requests.
-        
-    -   **Videos Per Month:**
-        
-        -   Minimum: 30,000 videos
-            
-        -   Maximum: 60,000 videos
-            
-        -   Average: $30,000+60,0002=45,000\frac{30,000 + 60,000}{2} = 45,000$ videos
-            
--   **GROQ API**
-    
-    -   **Rate Limit:** 500,000 tokens per day
-        
-    -   **Usage:** Each video creation consumes up to 1000-1200 tokens.
-        
-    -   **Videos Per Month:**
-        
-        -   Minimum: 12,500 videos
-            
-        -   Maximum: 15,000 videos
-            
-        -   Average: $12,500+15,0002=13,750\frac{12,500 + 15,000}{2} = 13,750$ videos
-            
+**Important Note:** The creation of a single video requires all three APIs (Pexels, FreeSound, and GROQ). Therefore, the API with the *most restrictive limit* at any given time will determine your overall video creation capacity.
+
+### API Rate Limits and Video Capacity
+
+Here's a breakdown of each API's rate limits and how they translate to video creation capacity:
+
+#### 1. Pexels API
+
+*   **Rate Limit:** 20,000 requests per month
+*   **Usage per video:** 1-12 requests
+*   **Monthly Video Capacity:**
+    *   **Minimum:** 1,667 videos (20,000 requests / 12 requests/video)
+    *   **Maximum:** 20,000 videos (20,000 requests / 1 request/video)
+
+#### 2. FreeSound API
+
+*   **Rate Limit:** 60,000 requests per month (2,000 requests/day * 30 days/month)
+*   **Usage per video:** 1-2 requests
+*   **Monthly Video Capacity:**
+    *   **Minimum:** 30,000 videos (60,000 requests / 2 requests/video)
+    *   **Maximum:** 60,000 videos (60,000 requests / 1 request/video)
+
+#### 3. GROQ API
+
+*   **Rate Limit:** 15,000,000 tokens per month (500,000 tokens/day * 30 days/month)
+*   **Usage per video:** 1,000-1,200 tokens
+*   **Monthly Video Capacity:**
+    *   **Minimum:** 12,500 videos (15,000,000 tokens / 1,200 tokens/video)
+    *   **Maximum:** 15,000 videos (15,000,000 tokens / 1,000 tokens/video)
 
 ### Overall Video Creation Capacity
-$\frac{15,000 + 45,000 + 13,750}{3} = \frac{73,750}{3} \approx 24,583 \text{ videos}$
 
-By  taking into account the average of usage limits of each service , you can create approximately **24,583 videos per month** on average. This estimate assumes balanced usage across all APIs and adherence to their respective rate limits and request limits. 
+Because all three APIs are necessary for video creation, your actual capacity is limited by the *most restrictive* API.  In this case:
 
-> Note: The actual number of videos you can create per month will depend on the specific combination of APIs used and respecting the rate limits of each service including the total requests sent per minute (which I haven't taken into consideration) 
-  
+*   **Minimum Possible Videos per Month:** 1,667 (limited by Pexels)
+*   **Maximum Possible Videos per Month:** 15,000 (limited by GROQ)
+
+Therefore, you can create between **1,667 and 15,000 videos per month**.
+
+### Important Considerations
+
+*   **Variable API Usage:** The actual number of videos you can create depends on the specific number of requests/tokens used *per video*.  If your videos tend to use more Pexels requests or GROQ tokens, your capacity will be closer to the minimum.  Conversely, if your videos are optimized to use fewer requests/tokens, you'll be closer to the maximum.
+*   **Combined Limits:**  It's crucial to remember that these limits are *combined*. Even if FreeSound allows for more videos, you're still limited by Pexels and GROQ.
+*   **Monitoring Usage:** It's recommended to monitor your API usage to avoid hitting rate limits unexpectedly.  This can often be done through the API provider's developer console or by tracking your CLI's API calls.
+*   **Future Changes:** API rate limits are subject to change.  Refer to the respective API documentation for the most up-to-date information.
+
+> This information should help you plan your video creation projects effectively. If you have any questions, please contact support
 ## Roadmap
 
 
